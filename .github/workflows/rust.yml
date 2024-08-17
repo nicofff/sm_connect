@@ -1,22 +1,44 @@
-name: Rust
-
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
+  release:
+    name: Release - ${{ matrix.platform.os_name }}
+    if: startsWith( github.ref, 'refs/tags/v' ) || github.ref == 'refs/tags/test-release'
+    strategy:
+      matrix:
+        platform:
+          - os_name: Linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
 
-    runs-on: ubuntu-latest
+          - os_name: macOS-arm64
+            os: macOS-latest
+            target: aarch64-apple-darwin
 
+
+    runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    # - name: Run tests
-    #   run: cargo test --verbose
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install toolchain if not cross-compiling
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build binary (*nix)
+        shell: bash
+        run: |
+          cargo build --locked --release
+      
+      - name: Package as archive
+        shell: bash
+        run: |
+          tar czvf ${{ matrix.platform.os_name}}.tar.gz target/release/sm_connect
+      # - name: Publish release artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: ubi-${{ matrix.platform.os_name }}
+      #     path: "ubi*"
+      #   if: github.ref == 'refs/tags/test-release'
+      # - name: Publish GitHub release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     draft: true
+      #     files: "ubi*"
+      #     body_path: Changes.md
+      #   if: startsWith( github.ref, 'refs/tags/v' )
