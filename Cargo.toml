@@ -1,0 +1,18 @@
+[package]
+name = "sm_connect"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aws-sdk-ec2 = "1.62.0"
+tokio = { version = "1.38.1", features = ["full"] }
+ratatui = { version = "0.27.0", features = ["all-widgets"]}
+anyhow = "1.0.75"
+crossterm = "0.27.0"
+signal-hook = "0.3.17"
+aws-config = "1.5.4"
+thiserror = "1.0.63"
+configparser = "3.1.0"
+home = "0.5.9"
