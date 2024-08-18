@@ -15,6 +15,7 @@ use ratatui::text::Span;
 use ratatui::{prelude::*, widgets::*};
 
 use std::io::Stdout;
+use std::rc::Rc;
 
 use anyhow::Result;
 use thiserror::Error;
@@ -73,38 +74,9 @@ impl App {
             terminal
                 .draw(|frame| {
                     // Set global layout
-                    let outer_layout = Layout::default()
-                        .direction(Direction::Vertical)
-                        .margin(0)
-                        .constraints(
-                            [
-                                Constraint::Percentage(10),
-                                Constraint::Percentage(95),
-                                Constraint::Percentage(5),
-                            ]
-                            .as_ref(),
-                        )
-                        .split(frame.size());
-
-                    let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
-                        .block(Block::bordered())
-                        .style(Style::default().white())
-                        .highlight_style(Style::default().yellow())
-                        .select(match self.status {
-                            AppStatus::RegionSelectState => 0,
-                            AppStatus::MainScreen => 1,
-                        });
-                    //.divider(symbols::DOT);
-                    frame.render_widget(tabs, outer_layout[0]);
-
-                    let inner_layout = Layout::default()
-                        .direction(Direction::Horizontal)
-                        .constraints(if self.info_panel_enabled {
-                            vec![Constraint::Percentage(75), Constraint::Percentage(25)]
-                        } else {
-                            vec![Constraint::Percentage(100), Constraint::Percentage(0)]
-                        })
-                        .split(outer_layout[1]);
+                    let outer_layout = self.get_outer_layout(frame);
+                    let inner_layout = self.get_inner_layout(frame, &outer_layout);
+                    
                     match self.status {
                         AppStatus::RegionSelectState => {
                             self.region_select_component.render(frame, inner_layout[0]);
@@ -227,5 +199,44 @@ impl App {
             Some(instance) => Ok(instance),
             None => Err(RuntimeError::UserExit.into()),
         }
+    }
+
+    fn get_outer_layout(&self, frame: &mut Frame) -> Rc<[Rect]> {
+        let outer = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(0)
+        .constraints(
+            [
+                Constraint::Percentage(10),
+                Constraint::Percentage(95),
+                Constraint::Percentage(5),
+            ]
+            .as_ref(),
+        )
+        .split(frame.size());
+
+        let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
+            .block(Block::bordered())
+            .style(Style::default().white())
+            .highlight_style(Style::default().yellow())
+            .select(match self.status {
+                AppStatus::RegionSelectState => 0,
+                AppStatus::MainScreen => 1,
+            });
+        //.divider(symbols::DOT);
+        frame.render_widget(tabs, outer[0]);
+        outer
+    }
+
+    fn get_inner_layout(&self, frame: &mut Frame, outer_layout: &Rc<[Rect]>) -> Rc<[Rect]> {
+        let inner_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(if self.info_panel_enabled {
+                vec![Constraint::Percentage(75), Constraint::Percentage(25)]
+            } else {
+                vec![Constraint::Percentage(100), Constraint::Percentage(0)]
+            })
+            .split(outer_layout[1]);
+        inner_layout
     }
 }
