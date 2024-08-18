@@ -6,7 +6,7 @@ on:
 jobs:
   release:
     name: Release - ${{ matrix.platform.os_name }}
-    #if: startsWith( github.ref, 'refs/tags/v' ) || github.ref == 'refs/tags/test-release'
+    if: startsWith( github.ref, 'refs/tags/v' ) || github.ref == 'refs/tags/test-release'
     strategy:
       matrix:
         platform:
@@ -22,9 +22,11 @@ jobs:
     runs-on: ${{ matrix.platform.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install toolchain if not cross-compiling
         uses: dtolnay/rust-toolchain@stable
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
       - name: Build binary (*nix)
         shell: bash
         run: |
@@ -35,15 +37,13 @@ jobs:
         run: |
           tar czvf ${{ matrix.target}}.tar.gz target/release/sm_connect
       - name: Publish release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sm_connect-${{ matrix.platform.os_name }}
           path: target/release/sm_connect
-      #   if: github.ref == 'refs/tags/test-release'
-      # - name: Publish GitHub release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     draft: true
-      #     files: "ubi*"
-      #     body_path: Changes.md
-      #   if: startsWith( github.ref, 'refs/tags/v' )
+        # if: github.ref == 'refs/tags/test-release'
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: Release.txt
