@@ -15,10 +15,22 @@ Also, it removes the complexity of connecting to it, by providing an easy way to
 Bonus points for not needing SSH anymore. 
 
 # Install
-TODO: setup github actions to build binaries for different platforms
 
 Make sure both the AWS CLI and the session manager plugin is [installed](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)  
 Make sure the your instances are [configured](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started.html) to allow connections from Session Manager
+
+1. Grab the last [release](https://github.com/nicofff/sm_connect/releases)
+2. Optional: Rename it / move it to a folder in your $PATH
+3. Make it executable: chmod +x sm_connect
+4. (Mac only) First time you run it you might get something that looks like:
+```
+$ ./sm_connect-macOS-arm64
+[1]    40745 killed     ./sm_connect-macOS-arm64
+```
+This is caused by MacOS blocking unsigned binary, you can create an exception by going to Settings -> Privacy and Security and hit "Allow Anyways"
+![Screenshot showing the setting in the MacOS Settings](docs/macos_security_settings.png?raw=true "Title")
+
+
 
 # How to use
 1. Make sure you are authed to AWS in the terminal.
