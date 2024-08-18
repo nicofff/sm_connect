@@ -4,7 +4,7 @@ pub mod region_list;
 pub mod text_input;
 use crossterm::event::{Event, KeyCode};
 
-use ratatui::widgets::Widget;
+use ratatui::{layout::Rect, widgets::Widget, Frame};
 
 use crate::aws::InstanceInfo;
 
@@ -27,6 +27,10 @@ pub trait HandleAction {
     fn handle_action(&mut self, action: Event) -> Action;
 }
 
-pub trait View {
+trait View {
     fn get_widget(&self) -> impl Widget;
+}
+
+pub trait Render {
+    fn render(&mut self, frame: &mut Frame,  area: Rect );
 }

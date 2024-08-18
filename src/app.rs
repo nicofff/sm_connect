@@ -3,8 +3,8 @@ use crate::components::instance_details::InstanceDetails;
 use crate::components::instance_table::InstanceTable;
 use crate::components::region_list::RegionList;
 use crate::components::text_input::TextInput;
-use crate::components::{Action, HandleAction};
-use crate::{aws::InstanceInfo, components::View};
+use crate::components::{Action, HandleAction, Render};
+use crate::aws::InstanceInfo;
 
 use aws_config::Region;
 use crossterm::event::{self};
@@ -105,9 +105,7 @@ impl App {
                     .split(outer_layout[1]);
                 match self.status {
                     AppStatus::RegionSelectState => {
-                            let widget = self.region_select_component.get_widget();
-                            // We can now render the item list
-                            frame.render_stateful_widget(widget, inner_layout[0], self.region_select_component.clone().get_state_mut());
+                            self.region_select_component.render(frame, inner_layout[0]);
                             // Render the "press q to exit" text
                             let rows = vec![
                                 Row::new(vec![
@@ -123,15 +121,10 @@ impl App {
                             frame.render_widget(table, outer_layout[2]);
                     },
                     AppStatus::MainScreen => {
-                        let component = self.instances_table_component.clone().unwrap();
-                        let widget = component.get_widget();
-                        frame.render_stateful_widget(widget, inner_layout[0], component.clone().get_state_mut());
-                        let component = self.info_panel_component.clone();
-                        let widget = component.get_widget();
-                        frame.render_widget(widget, inner_layout[1]);
+                        self.instances_table_component.clone().unwrap().render(frame, inner_layout[0]);
+                        self.info_panel_component.render(frame, inner_layout[1]);
                         if self.search_enabled {
-                            let widget = self.search_component.get_widget();
-                            frame.render_widget(widget, outer_layout[2]);
+                            self.search_component.render(frame, outer_layout[2]);
                             frame.set_cursor(outer_layout[2].x + self.search_component.get_cursor_position() as u16, outer_layout[2].y);
                         }else {
                             let rows = vec![

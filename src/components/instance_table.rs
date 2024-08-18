@@ -1,12 +1,12 @@
 use crate::aws::InstanceInfo;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::Constraint,
+    layout::{Constraint, Rect},
     style::{Color, Modifier, Style, Stylize},
-    widgets::{Block, Borders, Cell, Row, Table, TableState},
+    widgets::{Block, Borders, Cell, Row, Table, TableState}, Frame,
 };
 
-use super::{Action, HandleAction, View};
+use super::{Action, HandleAction, Render, View};
 
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -32,10 +32,6 @@ impl InstanceTable {
         let mut table = InstanceTable::with_items(items);
         table.apply_filter(filter);
         table
-    }
-
-    pub fn get_state_mut(&mut self) -> &mut TableState {
-        &mut self.state
     }
 
     pub fn apply_filter(&mut self, filter: String) {
@@ -169,5 +165,12 @@ impl View for InstanceTable {
                 Row::new(vec!["Name", "InstanceId", "Private IP", "Public IP"])
                     .style(Style::default().add_modifier(Modifier::BOLD).underlined())
             )
+    }
+}
+
+impl Render for InstanceTable {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        let widget = self.get_widget();
+        frame.render_stateful_widget(widget, area, &mut self.state.clone());
     }
 }

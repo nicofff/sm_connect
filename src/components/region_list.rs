@@ -1,8 +1,7 @@
-use super::{Action, HandleAction, View};
+use super::{Action, HandleAction, View, Render};
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, ListState},
+    layout::Rect, style::{Color, Modifier, Style}, widgets::{Block, Borders, List, ListItem, ListState}, Frame
 };
 
 #[derive(Default, Debug, Clone)]
@@ -51,10 +50,6 @@ impl RegionList {
             }
             a.cmp(b)
         });
-    }
-
-    pub fn get_state_mut(&mut self) -> &mut ListState {
-        &mut self.state
     }
 
     fn next(&mut self) {
@@ -138,5 +133,12 @@ impl View for RegionList {
                     .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol(">> ")
+    }
+}
+
+impl Render for RegionList {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        let widget = self.get_widget();
+        frame.render_stateful_widget(widget, area, &mut self.state.clone());
     }
 }

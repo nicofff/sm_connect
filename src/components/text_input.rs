@@ -1,8 +1,11 @@
 use crossterm::event::{Event, KeyCode};
-use ratatui::text::Text;
+use ratatui::layout::Rect;
+use ratatui::{text::Text, Frame};
 use ratatui::widgets::Paragraph;
 
 use crate::components::{Action, HandleAction, View};
+
+use super::Render;
 
 #[derive(Debug, Clone)]
 pub struct TextInput {
@@ -131,5 +134,12 @@ impl View for TextInput {
     fn get_widget(&self) -> Paragraph {
         let text: String = format!("Searching: {}", self.search_input);
         Paragraph::new(Text::from(text))
+    }
+}
+
+impl Render for TextInput {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        let widget = self.get_widget();
+        frame.render_widget(widget, area);
     }
 }

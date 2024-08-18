@@ -1,8 +1,11 @@
 use crate::aws::InstanceInfo;
+use ratatui::layout::Rect;
 use ratatui::text::Text;
 use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::Frame;
 
-use super::View;
+use super::text_input::TextInput;
+use super::{Render, View};
 
 #[derive(Debug, Clone, Default)]
 pub struct InstanceDetails {
@@ -45,5 +48,13 @@ impl View for InstanceDetails {
             None => Text::from("No instance selected".to_string()),
         };
         Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Details"))
+    }
+}
+
+
+impl Render for InstanceDetails {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        let widget = self.get_widget();
+        frame.render_widget(widget, area);
     }
 }
