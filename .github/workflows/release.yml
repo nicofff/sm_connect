@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     name: Build - ${{ matrix.platform.os_name }}
-    if: startsWith( github.ref, 'refs/tags/v' )
     strategy:
       matrix:
         platform:
@@ -41,7 +40,6 @@ jobs:
     name: Release
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/tags/'
     steps:
       - name: Download release artifacts
         uses: actions/download-artifact@v4
