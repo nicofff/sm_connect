@@ -74,8 +74,21 @@ impl App {
                 let outer_layout = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(0)
-                    .constraints([Constraint::Percentage(95), Constraint::Percentage(5)].as_ref())
+                    .constraints([Constraint::Percentage(10),Constraint::Percentage(95), Constraint::Percentage(5)].as_ref())
                     .split(frame.size());
+
+                let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
+                    .block(Block::bordered())
+                    .style(Style::default().white())
+                    .highlight_style(Style::default().yellow())
+                    .select(
+                        match self.status {
+                            AppStatus::RegionSelectState => 0,
+                            AppStatus::MainScreen => 1,
+                        }
+                    );
+                    //.divider(symbols::DOT);
+                frame.render_widget(tabs, outer_layout[0]);
 
                 let inner_layout = Layout::default()
                     .direction(Direction::Horizontal)
@@ -89,7 +102,7 @@ impl App {
                         Constraint::Percentage(0),
                     ]
                     })
-                    .split(outer_layout[0]);
+                    .split(outer_layout[1]);
                 match self.status {
                     AppStatus::RegionSelectState => {
                             let widget = self.region_select_component.get_widget();
@@ -107,7 +120,7 @@ impl App {
                             let table = Table::new(rows, vec![
                                 Constraint::Min(10), Constraint::Min(10), Constraint::Min(10), Constraint::Min(10)
                             ]);
-                            frame.render_widget(table, outer_layout[1]);
+                            frame.render_widget(table, outer_layout[2]);
                     },
                     AppStatus::MainScreen => {
                         let component = self.instances_table_component.clone().unwrap();
@@ -118,8 +131,8 @@ impl App {
                         frame.render_widget(widget, inner_layout[1]);
                         if self.search_enabled {
                             let widget = self.search_component.get_widget();
-                            frame.render_widget(widget, outer_layout[1]);
-                            frame.set_cursor(outer_layout[1].x + self.search_component.get_cursor_position() as u16, outer_layout[1].y);
+                            frame.render_widget(widget, outer_layout[2]);
+                            frame.set_cursor(outer_layout[2].x + self.search_component.get_cursor_position() as u16, outer_layout[2].y);
                         }else {
                             let rows = vec![
                                 Row::new(vec![
@@ -131,7 +144,7 @@ impl App {
                             let table = Table::new(rows, vec![
                                 Constraint::Min(10), Constraint::Min(10), Constraint::Min(10), Constraint::Min(10)
                             ]);
-                            frame.render_widget(table, outer_layout[1]);
+                            frame.render_widget(table, outer_layout[2]);
                         }
                     }
                 }
