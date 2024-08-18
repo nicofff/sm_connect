@@ -4,7 +4,6 @@ use ratatui::text::Text;
 use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Frame;
 
-use super::text_input::TextInput;
 use super::{Render, View};
 
 #[derive(Debug, Clone, Default)]
@@ -50,7 +49,6 @@ impl View for InstanceDetails {
         Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Details"))
     }
 }
-
 
 impl Render for InstanceDetails {
     fn render(&mut self, frame: &mut Frame, area: Rect) {

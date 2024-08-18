@@ -3,7 +3,8 @@ use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Rect},
     style::{Color, Modifier, Style, Stylize},
-    widgets::{Block, Borders, Cell, Row, Table, TableState}, Frame,
+    widgets::{Block, Borders, Cell, Row, Table, TableState},
+    Frame,
 };
 
 use super::{Action, HandleAction, Render, View};
@@ -100,7 +101,7 @@ impl InstanceTable {
                 None => Action::Noop,
             }
         } else {
-            return Action::Noop;
+            Action::Noop
         }
     }
 }
@@ -110,15 +111,9 @@ impl HandleAction for InstanceTable {
         match action {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Action::Exit,
-                KeyCode::Down => {
-                    self.perform_key_action(Some("nextItem"))
-                }
-                KeyCode::Up => {
-                    self.perform_key_action(Some("previousItem"))
-                }
-                KeyCode::Right | KeyCode::Enter => {
-                    self.perform_key_action(Some("accessItem"))
-                },
+                KeyCode::Down => self.perform_key_action(Some("nextItem")),
+                KeyCode::Up => self.perform_key_action(Some("previousItem")),
+                KeyCode::Right | KeyCode::Enter => self.perform_key_action(Some("accessItem")),
                 KeyCode::Char('/') => Action::Search,
                 KeyCode::Char('i') => Action::ToggleInfoPanel,
                 _ => Action::Noop,
@@ -163,7 +158,7 @@ impl View for InstanceTable {
             .highlight_symbol(">> ")
             .header(
                 Row::new(vec!["Name", "InstanceId", "Private IP", "Public IP"])
-                    .style(Style::default().add_modifier(Modifier::BOLD).underlined())
+                    .style(Style::default().add_modifier(Modifier::BOLD).underlined()),
             )
     }
 }

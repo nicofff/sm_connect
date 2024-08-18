@@ -1,17 +1,17 @@
 use crate::aws::fetch_instances;
+use crate::aws::InstanceInfo;
 use crate::components::instance_details::InstanceDetails;
 use crate::components::instance_table::InstanceTable;
 use crate::components::region_list::RegionList;
 use crate::components::text_input::TextInput;
 use crate::components::{Action, HandleAction, Render};
-use crate::aws::InstanceInfo;
 
 use aws_config::Region;
 use crossterm::event::{self};
 
+use ratatui::style::{Color, Style};
+use ratatui::text::Span;
 use ratatui::{prelude::*, widgets::*};
-use ratatui::text::{Span};
-use ratatui::style::{Style, Color};
 
 use std::io::Stdout;
 
@@ -69,79 +69,117 @@ impl App {
         let mut return_value: Option<InstanceInfo> = None;
         loop {
             // render
-            terminal.draw(|frame| {
-                // Set global layout
-                let outer_layout = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(0)
-                    .constraints([Constraint::Percentage(10),Constraint::Percentage(95), Constraint::Percentage(5)].as_ref())
-                    .split(frame.size());
+            terminal
+                .draw(|frame| {
+                    // Set global layout
+                    let outer_layout = Layout::default()
+                        .direction(Direction::Vertical)
+                        .margin(0)
+                        .constraints(
+                            [
+                                Constraint::Percentage(10),
+                                Constraint::Percentage(95),
+                                Constraint::Percentage(5),
+                            ]
+                            .as_ref(),
+                        )
+                        .split(frame.size());
 
-                let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
-                    .block(Block::bordered())
-                    .style(Style::default().white())
-                    .highlight_style(Style::default().yellow())
-                    .select(
-                        match self.status {
+                    let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
+                        .block(Block::bordered())
+                        .style(Style::default().white())
+                        .highlight_style(Style::default().yellow())
+                        .select(match self.status {
                             AppStatus::RegionSelectState => 0,
                             AppStatus::MainScreen => 1,
-                        }
-                    );
+                        });
                     //.divider(symbols::DOT);
-                frame.render_widget(tabs, outer_layout[0]);
+                    frame.render_widget(tabs, outer_layout[0]);
 
-                let inner_layout = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(if self.info_panel_enabled { vec![
-                        Constraint::Percentage(75),
-                        Constraint::Percentage(25),
-                    ]
-                    } else {
-                        vec![
-                        Constraint::Percentage(100),
-                        Constraint::Percentage(0),
-                    ]
-                    })
-                    .split(outer_layout[1]);
-                match self.status {
-                    AppStatus::RegionSelectState => {
+                    let inner_layout = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints(if self.info_panel_enabled {
+                            vec![Constraint::Percentage(75), Constraint::Percentage(25)]
+                        } else {
+                            vec![Constraint::Percentage(100), Constraint::Percentage(0)]
+                        })
+                        .split(outer_layout[1]);
+                    match self.status {
+                        AppStatus::RegionSelectState => {
                             self.region_select_component.render(frame, inner_layout[0]);
                             // Render the "press q to exit" text
-                            let rows = vec![
-                                Row::new(vec![
-                                    Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'h' Hide", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'r' Reset regions", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'*' Toggle Favorite", Style::default().fg(Color::White))),
-                                ]),
-                            ];
-                            let table = Table::new(rows, vec![
-                                Constraint::Min(10), Constraint::Min(10), Constraint::Min(10), Constraint::Min(10)
-                            ]);
-                            frame.render_widget(table, outer_layout[2]);
-                    },
-                    AppStatus::MainScreen => {
-                        self.instances_table_component.clone().unwrap().render(frame, inner_layout[0]);
-                        self.info_panel_component.render(frame, inner_layout[1]);
-                        if self.search_enabled {
-                            self.search_component.render(frame, outer_layout[2]);
-                            frame.set_cursor(outer_layout[2].x + self.search_component.get_cursor_position() as u16, outer_layout[2].y);
-                        }else {
-                            let rows = vec![
-                                Row::new(vec![
-                                    Cell::from(Span::styled("'/' Search", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'i' Info Panel", Style::default().fg(Color::White))),
-                                ]),
-                            ];
-                            let table = Table::new(rows, vec![
-                                Constraint::Min(10), Constraint::Min(10), Constraint::Min(10), Constraint::Min(10)
-                            ]);
+                            let rows = vec![Row::new(vec![
+                                Cell::from(Span::styled(
+                                    "'q' Exit",
+                                    Style::default().fg(Color::White),
+                                )),
+                                Cell::from(Span::styled(
+                                    "'h' Hide",
+                                    Style::default().fg(Color::White),
+                                )),
+                                Cell::from(Span::styled(
+                                    "'r' Reset regions",
+                                    Style::default().fg(Color::White),
+                                )),
+                                Cell::from(Span::styled(
+                                    "'*' Toggle Favorite",
+                                    Style::default().fg(Color::White),
+                                )),
+                            ])];
+                            let table = Table::new(
+                                rows,
+                                vec![
+                                    Constraint::Min(10),
+                                    Constraint::Min(10),
+                                    Constraint::Min(10),
+                                    Constraint::Min(10),
+                                ],
+                            );
                             frame.render_widget(table, outer_layout[2]);
                         }
+                        AppStatus::MainScreen => {
+                            self.instances_table_component
+                                .clone()
+                                .unwrap()
+                                .render(frame, inner_layout[0]);
+                            self.info_panel_component.render(frame, inner_layout[1]);
+                            if self.search_enabled {
+                                self.search_component.render(frame, outer_layout[2]);
+                                frame.set_cursor(
+                                    outer_layout[2].x
+                                        + self.search_component.get_cursor_position() as u16,
+                                    outer_layout[2].y,
+                                );
+                            } else {
+                                let rows = vec![Row::new(vec![
+                                    Cell::from(Span::styled(
+                                        "'/' Search",
+                                        Style::default().fg(Color::White),
+                                    )),
+                                    Cell::from(Span::styled(
+                                        "'q' Exit",
+                                        Style::default().fg(Color::White),
+                                    )),
+                                    Cell::from(Span::styled(
+                                        "'i' Info Panel",
+                                        Style::default().fg(Color::White),
+                                    )),
+                                ])];
+                                let table = Table::new(
+                                    rows,
+                                    vec![
+                                        Constraint::Min(10),
+                                        Constraint::Min(10),
+                                        Constraint::Min(10),
+                                        Constraint::Min(10),
+                                    ],
+                                );
+                                frame.render_widget(table, outer_layout[2]);
+                            }
+                        }
                     }
-                }
-            }).unwrap();
+                })
+                .unwrap();
 
             // handle events
             let event = event::read().unwrap();

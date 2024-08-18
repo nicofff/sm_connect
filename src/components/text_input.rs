@@ -1,7 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;
-use ratatui::{text::Text, Frame};
 use ratatui::widgets::Paragraph;
+use ratatui::{text::Text, Frame};
 
 use crate::components::{Action, HandleAction, View};
 

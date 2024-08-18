@@ -1,7 +1,10 @@
-use super::{Action, HandleAction, View, Render};
+use super::{Action, HandleAction, Render, View};
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::Rect, style::{Color, Modifier, Style}, widgets::{Block, Borders, List, ListItem, ListState}, Frame
+    layout::Rect,
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, ListItem, ListState},
+    Frame,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -115,12 +118,16 @@ impl HandleAction for RegionList {
 #[allow(refining_impl_trait)]
 impl View for RegionList {
     fn get_widget(&self) -> List {
-        
-        let items: Vec<ListItem> = self.items
+        let items: Vec<ListItem> = self
+            .items
             .iter()
             .map(|i| {
-                let prefix = if self.favorites.contains(i) { "★" } else { "" };
-                ListItem::new(format!("{} {}",prefix,i))
+                let prefix = if self.favorites.contains(i) {
+                    "★"
+                } else {
+                    ""
+                };
+                ListItem::new(format!("{} {}", prefix, i))
             })
             .collect();
 
