@@ -40,7 +40,7 @@ pub struct App {
     region_select_component: RegionList,
     search_component: TextInput,
     status: AppStatus,
-    instances_table_component: Option<InstanceTable>,
+    instances_table_component: InstanceTable,
     search_enabled: bool,
     info_panel_component: InstanceDetails,
 }
@@ -55,7 +55,7 @@ impl App {
             search_component: TextInput::default(),
             region_select_component: region_select,
             status: AppStatus::RegionSelectState,
-            instances_table_component: None,
+            instances_table_component: InstanceTable::with_items(vec![]),
             info_panel_enabled: false,
             info_panel_component: InstanceDetails::default(),
             search_enabled: false,
@@ -111,10 +111,7 @@ impl App {
                             self.region_select_component.render_help(frame, outer_layout[2]);
                         }
                         AppStatus::MainScreen => {
-                            self.instances_table_component
-                                .clone()
-                                .unwrap()
-                                .render(frame, inner_layout[0]);
+                            self.instances_table_component.render(frame, inner_layout[0]);
                             self.info_panel_component.render(frame, inner_layout[1]);
                             if self.search_enabled {
                                 self.search_component.render(frame, outer_layout[2]);
@@ -124,7 +121,7 @@ impl App {
                                     outer_layout[2].y,
                                 );
                             } else {
-                                self.instances_table_component.clone().unwrap().render_help(frame, outer_layout[2])
+                                self.instances_table_component.render_help(frame, outer_layout[2])
                             }
                         }
                     }
@@ -147,9 +144,8 @@ impl App {
                                 .sort_by_key(|instance_info| instance_info.get_name().to_owned());
                             let search_input = self.search_component.get_value();
 
-                            self.instances_table_component = Some(
-                                InstanceTable::with_items_and_filter(instances, search_input),
-                            );
+                            self.instances_table_component = InstanceTable::with_items_and_filter(instances, search_input);
+                            
                         }
                         Action::Hide(region) => {
                             self.config.hide_region(region);
@@ -177,25 +173,19 @@ impl App {
                                 self.search_enabled = false;
                             }
                             Action::Return(search) => {
-                                self.instances_table_component
-                                    .as_mut()
-                                    .unwrap()
-                                    .apply_filter(search);
+                                self.instances_table_component.apply_filter(search);
                                 self.search_enabled = false;
                             }
                             Action::PartialReturn(search) => {
-                                self.instances_table_component
-                                    .as_mut()
-                                    .unwrap()
-                                    .apply_filter(search);
+                                self.instances_table_component.apply_filter(search);
                             }
                             Action::ReturnWithKey(key) => {
                                 match key {
                                     event::KeyCode::Up => {
-                                        self.instances_table_component.as_mut().unwrap().previous();
+                                        self.instances_table_component.previous();
                                     }
                                     event::KeyCode::Down => {
-                                        self.instances_table_component.as_mut().unwrap().next();
+                                        self.instances_table_component.next();
                                     }
                                     _ => {}
                                 }
@@ -205,10 +195,7 @@ impl App {
                         }
                     } else {
                         let action = self
-                            .instances_table_component
-                            .as_mut()
-                            .unwrap()
-                            .handle_action(event);
+                            .instances_table_component.handle_action(event);
                         match action {
                             Action::Exit => {
                                 self.status = AppStatus::RegionSelectState;
