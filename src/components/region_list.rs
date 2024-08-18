@@ -117,6 +117,7 @@ impl HandleAction for RegionList {
     }
 }
 
+#[allow(refining_impl_trait)]
 impl View for RegionList {
     fn get_widget(&self) -> List {
         

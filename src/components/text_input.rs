@@ -75,6 +75,7 @@ impl TextInput {
         new_cursor_pos.clamp(0, self.search_input.len())
     }
 
+    #[allow(dead_code)]
     fn reset_cursor(&mut self) {
         self.search_cursor_position = 0;
     }
@@ -125,6 +126,7 @@ impl HandleAction for TextInput {
     }
 }
 
+#[allow(refining_impl_trait)]
 impl View for TextInput {
     fn get_widget(&self) -> Paragraph {
         let text: String = format!("Searching: {}", self.search_input);

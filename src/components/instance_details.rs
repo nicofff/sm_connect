@@ -15,6 +15,7 @@ impl InstanceDetails {
     }
 }
 
+#[allow(refining_impl_trait)]
 impl View for InstanceDetails {
     fn get_widget(&self) -> Paragraph {
         let text = match &self.instance {

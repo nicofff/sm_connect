@@ -64,6 +64,7 @@ impl InstanceInfo {
         self.raw_instance_data.image_id.clone().unwrap_or_default()
     }
 
+    #[allow(dead_code)]
     pub fn get_raw_instance_data(&self) -> Instance {
         self.raw_instance_data.clone()
     }

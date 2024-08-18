@@ -132,6 +132,7 @@ impl HandleAction for InstanceTable {
     }
 }
 
+#[allow(refining_impl_trait)]
 impl View for InstanceTable {
     fn get_widget(&self) -> Table {
         let items: Vec<Row> = self
