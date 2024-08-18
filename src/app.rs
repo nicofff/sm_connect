@@ -4,6 +4,7 @@ use crate::components::instance_details::InstanceDetails;
 use crate::components::instance_table::InstanceTable;
 use crate::components::region_list::RegionList;
 use crate::components::text_input::TextInput;
+use crate::components::RenderHelp;
 use crate::components::{Action, HandleAction, Render};
 
 use aws_config::Region;
@@ -107,35 +108,7 @@ impl App {
                     match self.status {
                         AppStatus::RegionSelectState => {
                             self.region_select_component.render(frame, inner_layout[0]);
-                            // Render the "press q to exit" text
-                            let rows = vec![Row::new(vec![
-                                Cell::from(Span::styled(
-                                    "'q' Exit",
-                                    Style::default().fg(Color::White),
-                                )),
-                                Cell::from(Span::styled(
-                                    "'h' Hide",
-                                    Style::default().fg(Color::White),
-                                )),
-                                Cell::from(Span::styled(
-                                    "'r' Reset regions",
-                                    Style::default().fg(Color::White),
-                                )),
-                                Cell::from(Span::styled(
-                                    "'*' Toggle Favorite",
-                                    Style::default().fg(Color::White),
-                                )),
-                            ])];
-                            let table = Table::new(
-                                rows,
-                                vec![
-                                    Constraint::Min(10),
-                                    Constraint::Min(10),
-                                    Constraint::Min(10),
-                                    Constraint::Min(10),
-                                ],
-                            );
-                            frame.render_widget(table, outer_layout[2]);
+                            self.region_select_component.render_help(frame, outer_layout[2]);
                         }
                         AppStatus::MainScreen => {
                             self.instances_table_component
@@ -151,30 +124,7 @@ impl App {
                                     outer_layout[2].y,
                                 );
                             } else {
-                                let rows = vec![Row::new(vec![
-                                    Cell::from(Span::styled(
-                                        "'/' Search",
-                                        Style::default().fg(Color::White),
-                                    )),
-                                    Cell::from(Span::styled(
-                                        "'q' Exit",
-                                        Style::default().fg(Color::White),
-                                    )),
-                                    Cell::from(Span::styled(
-                                        "'i' Info Panel",
-                                        Style::default().fg(Color::White),
-                                    )),
-                                ])];
-                                let table = Table::new(
-                                    rows,
-                                    vec![
-                                        Constraint::Min(10),
-                                        Constraint::Min(10),
-                                        Constraint::Min(10),
-                                        Constraint::Min(10),
-                                    ],
-                                );
-                                frame.render_widget(table, outer_layout[2]);
+                                self.instances_table_component.clone().unwrap().render_help(frame, outer_layout[2])
                             }
                         }
                     }

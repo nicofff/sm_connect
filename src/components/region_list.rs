@@ -1,10 +1,8 @@
-use super::{Action, HandleAction, Render, View};
+use super::{Action, HandleAction, Render, RenderHelp, View};
+use aws_config::Region;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::Rect,
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, ListState},
-    Frame,
+    layout::{Constraint, Rect}, style::{Color, Modifier, Style}, text::Span, widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table}, Frame
 };
 
 #[derive(Default, Debug, Clone)]
@@ -147,5 +145,38 @@ impl Render for RegionList {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let widget = self.get_widget();
         frame.render_stateful_widget(widget, area, &mut self.state.clone());
+    }
+}
+
+impl RenderHelp for RegionList {
+    fn render_help(&mut self, frame: &mut Frame, area: Rect) {
+        let rows = vec![Row::new(vec![
+            Cell::from(Span::styled(
+                "'q' Exit",
+                Style::default().fg(Color::White),
+            )),
+            Cell::from(Span::styled(
+                "'h' Hide",
+                Style::default().fg(Color::White),
+            )),
+            Cell::from(Span::styled(
+                "'r' Reset regions",
+                Style::default().fg(Color::White),
+            )),
+            Cell::from(Span::styled(
+                "'*' Toggle Favorite",
+                Style::default().fg(Color::White),
+            )),
+        ])];
+        let table = Table::new(
+            rows,
+            vec![
+                Constraint::Min(10),
+                Constraint::Min(10),
+                Constraint::Min(10),
+                Constraint::Min(10),
+            ],
+        );
+        frame.render_widget(table, area);
     }
 }

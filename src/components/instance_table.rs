@@ -1,13 +1,10 @@
 use crate::aws::InstanceInfo;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::{Constraint, Rect},
-    style::{Color, Modifier, Style, Stylize},
-    widgets::{Block, Borders, Cell, Row, Table, TableState},
-    Frame,
+    layout::{Constraint, Rect}, style::{Color, Modifier, Style, Stylize}, text::Span, widgets::{Block, Borders, Cell, Row, Table, TableState}, Frame
 };
 
-use super::{Action, HandleAction, Render, View};
+use super::{Action, HandleAction, Render, RenderHelp, View};
 
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -167,5 +164,34 @@ impl Render for InstanceTable {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let widget = self.get_widget();
         frame.render_stateful_widget(widget, area, &mut self.state.clone());
+    }
+}
+
+impl RenderHelp for InstanceTable {
+    fn render_help(&mut self, frame: &mut Frame, area: Rect) {
+        let rows = vec![Row::new(vec![
+            Cell::from(Span::styled(
+                "'/' Search",
+                Style::default().fg(Color::White),
+            )),
+            Cell::from(Span::styled(
+                "'q' Exit",
+                Style::default().fg(Color::White),
+            )),
+            Cell::from(Span::styled(
+                "'i' Info Panel",
+                Style::default().fg(Color::White),
+            )),
+        ])];
+        let table = Table::new(
+            rows,
+            vec![
+                Constraint::Min(10),
+                Constraint::Min(10),
+                Constraint::Min(10),
+                Constraint::Min(10),
+            ],
+        );
+        frame.render_widget(table, area);
     }
 }

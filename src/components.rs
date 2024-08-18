@@ -34,3 +34,7 @@ trait View {
 pub trait Render {
     fn render(&mut self, frame: &mut Frame, area: Rect);
 }
+
+pub trait RenderHelp {
+    fn render_help(&mut self, frame: &mut Frame, area: Rect);
+}
