@@ -3,6 +3,9 @@ on:
     tags:
       - '**'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build - ${{ matrix.platform.os_name }}
@@ -28,12 +31,14 @@ jobs:
         shell: bash
         run: |
           cargo build --locked --release
+      - name: Rename binary
+        run: mv target/release/sm_connect target/release/sm_connect-${{ matrix.platform.os_name }}
       
       - name: Publish release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sm_connect-${{ matrix.platform.os_name }}
-          path: target/release/sm_connect
+          path: target/release/sm_connect-${{ matrix.platform.os_name }}
 
 
   release:
