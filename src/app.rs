@@ -111,9 +111,9 @@ impl App {
                             // Render the "press q to exit" text
                             let rows = vec![
                                 Row::new(vec![
-                                    Cell::from(Span::styled("'Q' Exit", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'H' Hide", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'R' Reset regions", Style::default().fg(Color::White))),
+                                    Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
+                                    Cell::from(Span::styled("'h' Hide", Style::default().fg(Color::White))),
+                                    Cell::from(Span::styled("'r' Reset regions", Style::default().fg(Color::White))),
                                     Cell::from(Span::styled("'*' Toggle Favorite", Style::default().fg(Color::White))),
                                 ]),
                             ];
@@ -137,8 +137,8 @@ impl App {
                             let rows = vec![
                                 Row::new(vec![
                                     Cell::from(Span::styled("'/' Search", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'Q' Exit", Style::default().fg(Color::White))),
-                                    Cell::from(Span::styled("'I' Info Panel", Style::default().fg(Color::White))),
+                                    Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
+                                    Cell::from(Span::styled("'i' Info Panel", Style::default().fg(Color::White))),
                                 ]),
                             ];
                             let table = Table::new(rows, vec![
