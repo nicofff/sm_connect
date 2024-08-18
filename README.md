@@ -6,7 +6,7 @@ Session Manager Connect is a TUI to simplify using AWS Systems Manager's Session
 # Why?
 If you have a more than a few of EC2 servers, you usually do two things:
 1. Go to the AWS console, and get the ip address to connect to the server
-2. SSH in, usually this means connecting to a VPN, which is annoying to maintain
+2. SSH in, usually this means connecting to a VPN, which is annoying to have to maintain
 
 What if you could save you the VPN, and the looking up the instance information?
 This is what this tool does for you.  
@@ -17,8 +17,8 @@ Bonus points for not needing SSH anymore.
 # Install
 TODO: setup github actions to build binaries for different platforms
 
-Make sure both the AWS CLI and the session manager plugin is installed  
-Make sure the your instances are configured to allow connections from Session Manager
+Make sure both the AWS CLI and the session manager plugin is [installed](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)  
+Make sure the your instances are [configured](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started.html) to allow connections from Session Manager
 
 # How to use
 1. Make sure you are authed to AWS in the terminal.

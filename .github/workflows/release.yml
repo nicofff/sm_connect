@@ -45,12 +45,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
-          name: sm_connect-*
+          pattern: sm_connect-*
           path: release_files/
       - run: ls -l release_files/
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: release_files/sm_connect-*
 
