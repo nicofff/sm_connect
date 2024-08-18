@@ -1,3 +1,8 @@
+on:
+  push:
+    branches:
+      - '**'
+
 jobs:
   release:
     name: Release - ${{ matrix.platform.os_name }}
@@ -28,12 +33,12 @@ jobs:
       - name: Package as archive
         shell: bash
         run: |
-          tar czvf ${{ matrix.platform.os_name}}.tar.gz target/release/sm_connect
-      # - name: Publish release artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: ubi-${{ matrix.platform.os_name }}
-      #     path: "ubi*"
+          tar czvf ${{ matrix.target}}.tar.gz target/release/sm_connect
+      - name: Publish release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: sm_connect-${{ matrix.platform.os_name }}
+          path: target/release/sm_connect
       #   if: github.ref == 'refs/tags/test-release'
       # - name: Publish GitHub release
       #   uses: softprops/action-gh-release@v1
