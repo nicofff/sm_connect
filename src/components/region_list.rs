@@ -1,5 +1,4 @@
 use super::{Action, HandleAction, Render, RenderHelp, View};
-use aws_config::Region;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Rect}, style::{Color, Modifier, Style}, text::Span, widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table}, Frame
