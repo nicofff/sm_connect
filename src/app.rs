@@ -10,8 +10,7 @@ use crate::components::{Action, HandleAction, Render};
 use aws_config::Region;
 use crossterm::event::{self};
 
-use ratatui::style::{Color, Style};
-use ratatui::text::Span;
+use ratatui::style::{Style};
 use ratatui::{prelude::*, widgets::*};
 
 use std::io::Stdout;
@@ -228,7 +227,7 @@ impl App {
         outer
     }
 
-    fn get_inner_layout(&self, frame: &mut Frame, outer_layout: &Rc<[Rect]>) -> Rc<[Rect]> {
+    fn get_inner_layout(&self, _frame: &mut Frame, outer_layout: &Rc<[Rect]>) -> Rc<[Rect]> {
         let inner_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(if self.info_panel_enabled {
