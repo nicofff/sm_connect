@@ -29,9 +29,9 @@ This is caused by MacOS blocking unsigned binary, you can create an exception by
 
 # Prerequisites
 
-- You must have the `aws` CLI [installed](aws-cli-install).
-- You must [install](aws-sm-install) AWS Session Manager plugin.
-- You must [configure](aws-sm-config) your instances to allow connections from Session Manager.
+- You must have the `aws` CLI [installed][aws-cli-install].
+- You must [install][aws-sm-install] AWS Session Manager plugin.
+- You must [configure][aws-sm-config] your instances to allow connections from Session Manager.
 
 # Usage
 
