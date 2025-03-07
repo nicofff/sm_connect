@@ -1,6 +1,5 @@
 pub mod config_panel;
 pub mod instance_details;
-pub mod instance_selection;
 pub mod instance_table;
 pub mod region_list;
 pub mod text_input;

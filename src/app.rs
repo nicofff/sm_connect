@@ -6,7 +6,7 @@ use crate::components::region_list::RegionList;
 use crate::components::Component;
 use crate::components::{Action, HandleAction, Render};
 
-use crate::components::instance_selection::InstanceSelection;
+use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
 use crate::screens::region_select_screen;
 use crate::screens::region_select_screen::RegionSelectScreen;
@@ -44,13 +44,16 @@ pub enum RuntimeError {
     UserExit,
     #[error("Debugging, region {0}")]
     Region(String),
+    #[error("Error fetching instances. Check your AWS credentials and try again.")]
+    FetchInstanceError,
 }
 
 pub struct App {
     terminal: Terminal<CrosstermBackend<Stdout>>,
     selected_screen: SelectedScreen,
     region_select_screen: RegionSelectScreen,
-    instance_selection_screen: InstanceSelectScreen
+    instance_selection_screen: InstanceSelectScreen,
+    config_screen: ConfigScreen,
 }
 
 impl App {
@@ -59,11 +62,13 @@ impl App {
         let config = config::Config::new()?;
         let region_select_screen = RegionSelectScreen::new(config.clone());
         let instance_selection_screen = InstanceSelectScreen::new();
+        let config_screen = ConfigScreen::new(config.clone());
         Ok(App {
             terminal,
             selected_screen: SelectedScreen::RegionSelect,
             region_select_screen,
-            instance_selection_screen
+            instance_selection_screen,
+            config_screen,
         })
     }
 
@@ -80,7 +85,12 @@ impl App {
                         }
                         region_select_screen::Outcome::RegionSelected(region) => {
                             self.selected_screen = SelectedScreen::InstanceSelect;
-                            self.instance_selection_screen.with_region(region).await?;
+                            match self.instance_selection_screen.with_region(region).await {
+                                Ok(_) => {},
+                                Err(_e) => {
+                                    return Err(RuntimeError::FetchInstanceError.into());
+                                }
+                            }
 
                         }
                         region_select_screen::Outcome::OpenConfig => {
@@ -100,7 +110,11 @@ impl App {
                     }
                 }
                 SelectedScreen::Config => {
-                    //self.config_panel.render(frame, render_area);
+                    match self.config_screen.run(&mut self.terminal)? {
+                        crate::screens::config_screen::Outcome::Exit => {
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                        }
+                    }
                 }
             }
             // handle events

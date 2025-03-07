@@ -60,6 +60,7 @@ impl InstanceSelectScreen {
                 ])
                 .split(layout[1]);
                 frame.render_widget(Clear, search_layout[1]); //this clears out the background
+                //TODO: Since we are drawing on top, maybe give it some distinct style?
                 self.search_component.view(frame, search_layout[1]);
             }
         })?;

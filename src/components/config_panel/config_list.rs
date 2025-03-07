@@ -1,4 +1,4 @@
-use crate::components::{Action, HandleAction, Render, RenderHelp, View};
+use crate::components::{Action, Component, HandleAction, Render, RenderHelp, View};
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -121,11 +121,15 @@ impl Render for ConfigList {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(100)])
+            .constraints(vec![
+                Constraint::Percentage(90),
+                Constraint::Percentage(10),
+            ])
             .split(area);
 
         let widget = self.get_widget();
         frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
+        self.render_help(frame, vertical_layout[1]);
     }
 }
 
@@ -137,5 +141,51 @@ impl RenderHelp for ConfigList {
         ))])];
         let table = Table::new(rows, vec![Constraint::Min(10)]);
         frame.render_widget(table, area);
+    }
+}
+
+
+pub enum ConfigListMessage {
+    Exit,
+    Up,
+    Down,
+    Enter,
+}
+
+impl Component<ConfigListMessage> for ConfigList {
+    fn update(&mut self, msg: Option<ConfigListMessage>) -> Result<Option<Action>> {
+        match msg {
+            Some(ConfigListMessage::Exit) => Ok(Some(Action::Exit)),
+            Some(ConfigListMessage::Up) => {
+                self.previous();
+                Ok(None)
+            }
+            Some(ConfigListMessage::Down) => {
+                self.next();
+                Ok(None)
+            }
+            Some(ConfigListMessage::Enter) => match self.current() {
+                Some(option) => Ok(Some(Action::ReturnConfig(option))),
+                None => Ok(None),
+            },
+            None => Ok(None),
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        self.render(frame, area);
+    }
+
+    fn handle_event(&self,event: Event)-> Option<ConfigListMessage> {
+        match event {
+            Event::Key(key) => match key.code {
+                KeyCode::Char('q') => Some(ConfigListMessage::Exit),
+                KeyCode::Down => Some(ConfigListMessage::Down),
+                KeyCode::Up => Some(ConfigListMessage::Up),
+                KeyCode::Right | KeyCode::Enter => Some(ConfigListMessage::Enter),
+                _ => None,
+            },
+            _ => None,
+        }
     }
 }
