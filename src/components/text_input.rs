@@ -5,7 +5,7 @@ use ratatui::{text::Text, Frame};
 
 use crate::components::{Action, HandleAction, View};
 
-use super::Render;
+use super::{Component, Render};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct TextInput {
@@ -103,43 +103,7 @@ impl TextInput {
 
 impl HandleAction for TextInput {
     fn handle_action(&mut self, action: Event) -> Result<Action> {
-        let action = match action {
-            Event::Key(key) => {
-                match key.code {
-                    KeyCode::Char(c) => {
-                        self.enter_char(c);
-                        Action::PartialReturn(self.search_input.clone())
-                    }
-                    KeyCode::Backspace => {
-                        self.delete_char();
-                        Action::PartialReturn(self.search_input.clone())
-                    }
-                    KeyCode::Right => {
-                        self.move_cursor_right();
-                        Action::Noop
-                    }
-                    KeyCode::Left => {
-                        self.move_cursor_left();
-                        Action::Noop
-                    }
-                    KeyCode::Esc => {
-                        //self.reset_cursor();
-                        Action::Exit
-                    }
-                    KeyCode::Up | KeyCode::Down => {
-                        //self.reset_cursor();
-                        Action::ReturnWithKey(key.code)
-                    }
-                    KeyCode::Enter => {
-                        //self.reset_cursor();
-                        Action::Return(self.search_input.clone())
-                    }
-                    _ => Action::Noop,
-                }
-            }
-            _ => Action::Noop,
-        };
-        Ok(action)
+        todo!();
     }
 }
 
@@ -155,5 +119,77 @@ impl Render for TextInput {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let widget = self.get_widget();
         frame.render_widget(widget, area);
+    }
+}
+
+pub enum TextInputMessage {
+    Char(char),
+    Backspace,
+    Right,
+    Left,
+    Esc,
+    Up,
+    Down,
+    Enter,
+}
+
+impl Component<TextInputMessage> for TextInput {
+    fn update(&mut self, msg: Option<TextInputMessage>) -> Result<Option<Action>> {
+        let Some(msg) = msg else {
+            return Ok(None);
+        };
+        match msg {
+            TextInputMessage::Char(c) => {
+                self.enter_char(c);
+                return Ok(Some(Action::PartialReturn(self.search_input.clone())));
+            },
+            TextInputMessage::Backspace => {
+                self.delete_char();
+                return Ok(Some(Action::PartialReturn(self.search_input.clone())));
+            },
+            TextInputMessage::Right => {
+                self.move_cursor_right();
+                return Ok(None);
+            },
+            TextInputMessage::Left => {
+                self.move_cursor_left();
+                return Ok(None);
+            },
+            TextInputMessage::Esc => {
+                return Ok(Some(Action::Exit));
+            },
+            TextInputMessage::Up  => {
+                return Ok(Some(Action::ReturnWithKeyUp));
+            },
+            TextInputMessage::Down => {
+                return Ok(Some(Action::ReturnWithKeyDown));
+            },
+            TextInputMessage::Enter => {
+                return Ok(Some(Action::Return(self.search_input.clone())));
+            },  
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        self.render(frame, area);
+    }
+
+    fn handle_event(&self,event: Event)-> Option<TextInputMessage> {
+        match event {
+            Event::Key(key) => {
+                match key.code {
+                    KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
+                    KeyCode::Backspace => Some(TextInputMessage::Backspace),
+                    KeyCode::Right => Some(TextInputMessage::Right),
+                    KeyCode::Left => Some(TextInputMessage::Left),
+                    KeyCode::Esc => Some(TextInputMessage::Esc),
+                    KeyCode::Up => Some(TextInputMessage::Up),
+                    KeyCode::Down => Some(TextInputMessage::Down),
+                    KeyCode::Enter => Some(TextInputMessage::Enter),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
     }
 }

@@ -4,6 +4,7 @@ pub mod instance_selection;
 pub mod instance_table;
 pub mod region_list;
 pub mod text_input;
+pub mod header_tabs;
 use config_panel::config_list::ConfigOption;
 use crossterm::event::{Event, KeyCode};
 use anyhow::Result;
@@ -15,7 +16,10 @@ pub enum Action {
     Noop,
     Exit,
     Return(String),
+    ReturnRegion(String),
     ReturnWithKey(KeyCode),
+    ReturnWithKeyUp,
+    ReturnWithKeyDown,
     ReturnInstance(InstanceInfo),
     ReturnConfig(ConfigOption),
     OpenConfig,
@@ -26,6 +30,12 @@ pub enum Action {
     Hide(String),
     Reset,
     ToggleFavorite(String),
+}
+
+pub trait Component<Message> {
+    fn update(&mut self, msg: Option<Message>) -> Result<Option<Action>>;
+    fn view(&mut self, frame: &mut Frame, area: Rect);
+    fn handle_event(&self,event: Event)-> Option<Message>;
 }
 
 pub trait HandleAction {

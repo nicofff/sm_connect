@@ -1,28 +1,38 @@
-use super::{Action, HandleAction, Render, RenderHelp, View};
+use std::sync::Arc;
+use std::sync::Mutex;
+
+use crate::app::config::Config;
+
+use super::{Action, Component, HandleAction, Render, RenderHelp, View};
+use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
-    Frame,
 };
-use anyhow::Result;
 #[derive(Default, Debug, Clone)]
 pub struct RegionList {
     state: ListState,
     items: Vec<String>,
     favorites: Vec<String>,
+    config: Arc<Mutex<Config>>,
 }
 
 impl RegionList {
-    pub fn with_items(items: Vec<String>) -> RegionList {
+    pub fn new(config: Arc<Mutex<Config>>) -> RegionList {
         let mut state = ListState::default();
         state.select(Some(0));
+        let unlocked = config.lock().unwrap();
+        let items = unlocked.get_visible_regions();
+        let favorites = unlocked.get_favorite_regions();
         RegionList {
             state,
             items,
-            favorites: Vec::new(),
+            favorites,
+            config: config.clone(),
         }
     }
 
@@ -88,7 +98,7 @@ impl RegionList {
 
 impl HandleAction for RegionList {
     fn handle_action(&mut self, action: Event) -> Result<Action> {
-       let action =  match action {
+        let action = match action {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Action::Exit,
                 KeyCode::Char('h') => Action::Hide(self.current().unwrap()),
@@ -165,7 +175,8 @@ impl RenderHelp for RegionList {
                 Cell::from(Span::styled(
                     "'r' Reset regions",
                     Style::default().fg(Color::White),
-                ))]),
+                )),
+            ]),
             Row::new(vec![
                 Cell::from(Span::styled(
                     "'*' Toggle Favorite",
@@ -175,7 +186,8 @@ impl RenderHelp for RegionList {
                     "'c' to open configuration",
                     Style::default().fg(Color::White),
                 )),
-        ])];
+            ]),
+        ];
         let table = Table::new(
             rows,
             vec![
@@ -186,5 +198,88 @@ impl RenderHelp for RegionList {
             ],
         );
         frame.render_widget(table, area);
+    }
+}
+
+pub enum RegionListEvent {
+    Exit,
+    HideRegion,
+    OpenConfig,
+    Reset,
+    ToggleFavorite,
+    Up,
+    Down,
+    Enter,
+}
+
+pub enum RegionListMessage {
+    Exit,
+    OpenConfig,
+    Enter(String),
+}
+
+impl Component<RegionListEvent> for RegionList {
+    fn handle_event(&self, event: Event) -> Option<RegionListEvent> {
+        match event {
+            Event::Key(key) => match key.code {
+                KeyCode::Char('q') => Some(RegionListEvent::Exit),
+                KeyCode::Char('h') => Some(RegionListEvent::HideRegion),
+                KeyCode::Char('r') => Some(RegionListEvent::Reset),
+                KeyCode::Char('c') => Some(RegionListEvent::OpenConfig),
+                KeyCode::Char('*') => Some(RegionListEvent::ToggleFavorite),
+                KeyCode::Down => Some(RegionListEvent::Down),
+                KeyCode::Up => Some(RegionListEvent::Up),
+                KeyCode::Right | KeyCode::Enter => Some(RegionListEvent::Enter),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    fn update(&mut self, msg: Option<RegionListEvent>) -> Result<Option<Action>> {
+        let Some(msg) = msg else {
+            return Ok(None);
+        };
+        match msg {
+            RegionListEvent::Exit => Ok(Some(Action::Exit)),
+            RegionListEvent::HideRegion => {
+                let Some(region) = self.current() else {
+                    return Ok(None);
+                };
+                let mut config = self.config.lock().unwrap();
+                config.hide_region(region)?;
+                Ok(None)
+            },
+            RegionListEvent::Reset => {
+                let mut config = self.config.lock().unwrap();
+                config.reset_hidden_regions()?;
+                Ok(None)
+            },
+            RegionListEvent::OpenConfig => Ok(Some(Action::OpenConfig)),
+            RegionListEvent::ToggleFavorite => {
+                let Some(region) = self.current() else {
+                    return Ok(None);
+                };
+                let mut config = self.config.lock().unwrap();
+                config.toggle_favorite_region(region)?;
+                Ok(None)
+            },
+            RegionListEvent::Down => {
+                self.next();
+                Ok(None)
+            }
+            RegionListEvent::Up => {
+                self.previous();
+                Ok(None)
+            }
+            RegionListEvent::Enter => match self.current() {
+                Some(str) => Ok(Some(Action::ReturnRegion(str))),
+                None => Ok(None),
+            },
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        self.render(frame, area);
     }
 }

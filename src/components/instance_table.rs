@@ -1,14 +1,14 @@
 use crate::aws::InstanceInfo;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::Span,
     widgets::{Block, Borders, Cell, Row, Table, TableState},
     Frame,
 };
 
-use super::{Action, HandleAction, Render, RenderHelp, View};
+use super::{Action, Component, HandleAction, Render, RenderHelp, View};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -20,6 +20,24 @@ pub struct InstanceTable {
 }
 
 impl InstanceTable {
+
+    pub fn new() -> InstanceTable {
+        let state = TableState::default();
+        InstanceTable {
+            state,
+            items: vec![],
+            visible_items: vec![],
+            filter: String::default(),
+            recent_first: false,
+        }
+    }
+
+    pub fn set_instances(&mut self, instances: Vec<InstanceInfo>) {
+        self.items = instances.clone();
+        self.visible_items = instances.clone();
+        self.apply_filter(self.filter.clone());
+    }
+
     pub fn with_items(items: Vec<InstanceInfo>) -> InstanceTable {
         let mut state = TableState::default();
         state.select(Some(0));
@@ -196,8 +214,14 @@ impl View for InstanceTable {
 
 impl Render for InstanceTable {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
+        let vertical_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .split(area);
+
         let widget = self.get_widget();
-        frame.render_stateful_widget(widget, area, &mut self.state.clone());
+        frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
+        self.render_help(frame, vertical_layout[1]);
     }
 }
 
@@ -229,5 +253,65 @@ impl RenderHelp for InstanceTable {
             ],
         );
         frame.render_widget(table, area);
+    }
+}
+
+
+pub enum InstanceTableMessage {
+    Exit,
+    Up,
+    Down,
+    Enter,
+    Search,
+    RecentFirst,
+}
+
+impl Component<InstanceTableMessage> for InstanceTable {
+    fn update(&mut self, msg: Option<InstanceTableMessage>) -> Result<Option<Action>> {
+        let Some(msg) = msg else {
+            return Ok(None);
+        };
+        match msg {
+            InstanceTableMessage::Exit => Ok(Some(Action::Exit)),
+            InstanceTableMessage::Up => {
+                self.previous();
+                Ok(None)
+            }
+            InstanceTableMessage::Down => {
+                self.next();
+                Ok(None)
+            }
+            InstanceTableMessage::Enter => {
+                match self.current() {
+                    Some(item) => Ok(Some(Action::ReturnInstance(item))),
+                    None => Ok(None),
+                }
+            }
+            InstanceTableMessage::Search => Ok(Some(Action::Search)),
+            InstanceTableMessage::RecentFirst => {
+                self.recent_first = !self.recent_first;
+                self.sort_instances();
+                Ok(None)
+            }
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        self.render(frame, area);
+    }
+    
+    fn handle_event(&self,event: Event)-> Option<InstanceTableMessage> {
+        match event {
+            Event::Key(key) => match key.code {
+                KeyCode::Char('q') => Some(InstanceTableMessage::Exit),
+                KeyCode::Down => Some(InstanceTableMessage::Down),
+                KeyCode::Up => Some(InstanceTableMessage::Up),
+                KeyCode::Right | KeyCode::Enter => Some(InstanceTableMessage::Enter),
+                KeyCode::Char('/') => Some(InstanceTableMessage::Search),
+                KeyCode::Char('r') => Some(InstanceTableMessage::RecentFirst),
+                _ => None,
+            },
+            _ => None,
+        }
     }
 }

@@ -8,20 +8,15 @@ use std::process::Command;
 mod components;
 mod history;
 use history::{History, HistoryEntry};
-
+mod screens;
 use anyhow::{Context, Result};
 use signal_hook::{consts::signal::*, iterator::Signals};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut terminal = setup_terminal().context("setup failed")?;
-    let Ok(mut app) = App::new() else {
-        restore_terminal(&mut terminal).context("restore terminal failed")?;
-        return Ok(());
-    };
-    let selected = app.run(&mut terminal).await;
-
-    restore_terminal(&mut terminal).context("restore terminal failed")?;
+    let mut app = App::new()?;
+    let selected = app.run().await;
+    drop(app);
     match selected {
         Err(e) => match e.downcast_ref() {
             Some(app::RuntimeError::UserExit) => {}
