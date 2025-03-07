@@ -3,9 +3,9 @@ use ratatui::layout::Rect;
 use ratatui::widgets::Paragraph;
 use ratatui::{text::Text, Frame};
 
-use crate::components::{Action, HandleAction, View};
+use crate::components::Action;
 
-use super::{Component, Render};
+use super::Component;
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct TextInput {
@@ -99,26 +99,10 @@ impl TextInput {
         self.search_cursor_position = value.len();
         self.search_input = value;
     }
-}
 
-impl HandleAction for TextInput {
-    fn handle_action(&mut self, action: Event) -> Result<Action> {
-        todo!();
-    }
-}
-
-#[allow(refining_impl_trait)]
-impl View for TextInput {
     fn get_widget(&self) -> Paragraph {
         let text: String = format!("{}{}", self.prompt, self.search_input);
         Paragraph::new(Text::from(text))
-    }
-}
-
-impl Render for TextInput {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let widget = self.get_widget();
-        frame.render_widget(widget, area);
     }
 }
 
@@ -171,7 +155,8 @@ impl Component<TextInputMessage> for TextInput {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        self.render(frame, area);
+        let widget = self.get_widget();
+        frame.render_widget(widget, area);
     }
 
     fn handle_event(&self,event: Event)-> Option<TextInputMessage> {
