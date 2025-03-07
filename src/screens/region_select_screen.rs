@@ -3,7 +3,7 @@ use std::{ io::Stdout, sync::{Arc, Mutex}};
 use crossterm::event;
 use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, Terminal};
 
-use crate::{app::config::Config, components::{header_tabs::HeaderTabs, region_list::{RegionList, RegionListMessage}, Action, Component}};
+use crate::{app::config::Config, components::{header_tabs::{HeaderTabs, Tab}, region_list::{RegionList, RegionListMessage}, Action, Component}};
 
 use anyhow::Result;
 
@@ -24,7 +24,8 @@ pub enum Outcome {
 impl RegionSelectScreen {
     pub fn new(config: Arc<Mutex<Config>>) -> Self {
         let region_select_component = RegionList::new(config.clone());
-        let header_tabs_component = HeaderTabs::new();
+        let mut header_tabs_component = HeaderTabs::new();
+        header_tabs_component.set_selected(Tab::Region);
         Self {
             header_tabs_component,
             region_select_component

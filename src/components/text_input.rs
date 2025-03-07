@@ -141,11 +141,11 @@ impl Component<TextInputMessage> for TextInput {
         match msg {
             TextInputMessage::Char(c) => {
                 self.enter_char(c);
-                return Ok(Some(Action::PartialReturn(self.search_input.clone())));
+                return Ok(Some(Action::PartialReturn(self.get_value())));
             },
             TextInputMessage::Backspace => {
                 self.delete_char();
-                return Ok(Some(Action::PartialReturn(self.search_input.clone())));
+                return Ok(Some(Action::PartialReturn(self.get_value())));
             },
             TextInputMessage::Right => {
                 self.move_cursor_right();
@@ -165,7 +165,7 @@ impl Component<TextInputMessage> for TextInput {
                 return Ok(Some(Action::ReturnWithKeyDown));
             },
             TextInputMessage::Enter => {
-                return Ok(Some(Action::Return(self.search_input.clone())));
+                return Ok(Some(Action::Return(self.get_value())));
             },  
         }
     }

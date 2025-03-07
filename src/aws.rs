@@ -63,41 +63,9 @@ impl InstanceInfo {
         self.region.clone()
     }
 
-    pub fn get_image_id(&self) -> String {
-        self.raw_instance_data.image_id.clone().unwrap_or_default()
-    }
-
     #[allow(dead_code)]
     pub fn get_raw_instance_data(&self) -> Instance {
         self.raw_instance_data.clone()
-    }
-
-    pub fn get_instance_type(&self) -> String {
-        self.raw_instance_data
-            .instance_type
-            .clone()
-            .map_or(String::default(), |x| x.to_string())
-    }
-
-    pub fn get_launch_time(&self) -> String {
-        self.raw_instance_data
-            .launch_time
-            .map_or(String::default(), |x| x.to_string())
-    }
-
-    pub fn get_vpc_id(&self) -> String {
-        self.raw_instance_data.vpc_id.clone().unwrap_or_default()
-    }
-
-    pub fn get_security_groups(&self) -> Vec<String> {
-        let Some(ref security_groups) = self.raw_instance_data.security_groups else {
-            return Vec::new();
-        };
-
-        security_groups
-            .iter()
-            .map(|sg| sg.group_name.clone().unwrap_or_default())
-            .collect()
     }
 
     pub fn get_last_access(&self) -> Option<u64> {

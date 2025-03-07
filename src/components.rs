@@ -1,10 +1,9 @@
-pub mod config_panel;
-pub mod instance_details;
 pub mod instance_table;
 pub mod region_list;
 pub mod text_input;
 pub mod header_tabs;
-use config_panel::config_list::ConfigOption;
+pub mod config_list;
+use config_list::ConfigOption;
 use crossterm::event::{Event, KeyCode};
 use anyhow::Result;
 use ratatui::{layout::Rect, widgets::Widget, Frame};

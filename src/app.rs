@@ -1,10 +1,4 @@
-use crate::aws::fetch_instances;
 use crate::aws::InstanceInfo;
-use crate::components::config_panel::ConfigPanel;
-use crate::components::instance_details::InstanceDetails;
-use crate::components::region_list::RegionList;
-use crate::components::Component;
-use crate::components::{Action, HandleAction, Render};
 
 use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
@@ -15,16 +9,10 @@ use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
 use anyhow::Context;
-use aws_config::Region;
-use crossterm::event::Event;
-use crossterm::event::{self};
-
 use ratatui::style::Style;
 use ratatui::{prelude::*, widgets::*};
 
 use std::io::Stdout;
-use std::sync::Arc;
-use std::sync::Mutex;
 
 use anyhow::Result;
 use thiserror::Error;

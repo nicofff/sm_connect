@@ -4,7 +4,7 @@ use aws_config::Region;
 use crossterm::event;
 use ratatui::{layout::{Constraint, Layout}, prelude::CrosstermBackend, widgets::Clear, Terminal};
 
-use crate::{aws::{fetch_instances, InstanceInfo}, components::{header_tabs::HeaderTabs, instance_details::InstanceDetails, instance_table::InstanceTable, text_input::TextInput, Action, Component}};
+use crate::{aws::{fetch_instances, InstanceInfo}, components::{header_tabs::{HeaderTabs, Tab}, instance_table::InstanceTable, text_input::TextInput, Action, Component}};
 
 use super::Screen;
 use anyhow::Result;
@@ -27,7 +27,8 @@ impl InstanceSelectScreen {
     pub fn new() -> InstanceSelectScreen {
         let instance_table_component = InstanceTable::new();
         let search_component = TextInput::default();
-        let header_tabs_component = HeaderTabs::new();
+        let mut header_tabs_component = HeaderTabs::new();
+        header_tabs_component.set_selected(Tab::Instances);
         Self {
             header_tabs_component,
             instance_table_component,

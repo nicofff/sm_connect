@@ -25,6 +25,7 @@ impl From<ConfigOption> for String {
 
 const CONFIG_OPTIONS: [ConfigOption; 2] =
     [ConfigOption::ResetRecent, ConfigOption::SetRecentTimeout];
+    
 #[derive(Debug)]
 pub struct ConfigList {
     state: ListState,

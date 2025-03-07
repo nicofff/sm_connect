@@ -6,7 +6,7 @@ pub struct HeaderTabs {
     selected: Option<Tab>
 }
 #[derive(Debug, Clone, Copy)]
-enum Tab {
+pub enum Tab {
     Region,
     Instances,
     Connection,
