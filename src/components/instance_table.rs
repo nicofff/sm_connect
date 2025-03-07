@@ -8,7 +8,7 @@ use ratatui::{
     Frame,
 };
 
-use super::{Action, Component, HandleAction, Render, RenderHelp, View};
+use super::{Action, Component};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -36,24 +36,6 @@ impl InstanceTable {
         self.items = instances.clone();
         self.visible_items = instances.clone();
         self.apply_filter(self.filter.clone());
-    }
-
-    pub fn with_items(items: Vec<InstanceInfo>) -> InstanceTable {
-        let mut state = TableState::default();
-        state.select(Some(0));
-        InstanceTable {
-            state,
-            items: items.clone(),
-            visible_items: items.clone(),
-            filter: String::default(),
-            recent_first: false,
-        }
-    }
-
-    pub fn with_items_and_filter(items: Vec<InstanceInfo>, filter: String) -> InstanceTable {
-        let mut table = InstanceTable::with_items(items);
-        table.apply_filter(filter);
-        table
     }
 
     pub fn apply_filter(&mut self, filter: String) {
@@ -122,55 +104,7 @@ impl InstanceTable {
         self.state.selected().map(|i| self.visible_items[i].clone())
     }
 
-    fn perform_key_action(&mut self, action: Option<&str>) -> Action {
-        if !self.visible_items.is_empty() {
-            match action {
-                Some("nextItem") => self.next(),
-                Some("previousItem") => self.previous(),
-                Some("accessItem") => {
-                    return match self.current() {
-                        Some(item) => Action::ReturnInstance(item),
-                        None => Action::Noop,
-                    };
-                }
-                _ => {}
-            }
-            match self.current() {
-                Some(item) => Action::Select(item),
-                None => Action::Noop,
-            }
-        } else {
-            Action::Noop
-        }
-    }
-}
-
-impl HandleAction for InstanceTable {
-    fn handle_action(&mut self, action: Event) -> Result<Action> {
-        let action = match action {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('q') => Action::Exit,
-                KeyCode::Down => self.perform_key_action(Some("nextItem")),
-                KeyCode::Up => self.perform_key_action(Some("previousItem")),
-                KeyCode::Right | KeyCode::Enter => self.perform_key_action(Some("accessItem")),
-                KeyCode::Char('/') => Action::Search,
-                KeyCode::Char('i') => Action::ToggleInfoPanel,
-                KeyCode::Char('r') => {
-                    self.recent_first = !self.recent_first;
-                    self.sort_instances();
-                    Action::Noop
-                }
-                _ => Action::Noop,
-            },
-            _ => Action::Noop,
-        };
-        Ok(action)
-    }
-}
-
-#[allow(refining_impl_trait)]
-impl View for InstanceTable {
-    fn get_widget(&self) -> Table {
+    fn get_table(&self) -> Table {
         let items: Vec<Row> = self
             .visible_items
             .iter()
@@ -210,33 +144,14 @@ impl View for InstanceTable {
                     .style(Style::default().add_modifier(Modifier::BOLD).underlined()),
             )
     }
-}
 
-impl Render for InstanceTable {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let vertical_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
-            .split(area);
-
-        let widget = self.get_widget();
-        frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
-        self.render_help(frame, vertical_layout[1]);
-    }
-}
-
-impl RenderHelp for InstanceTable {
-    fn render_help(&mut self, frame: &mut Frame, area: Rect) {
+    fn get_help(&self) -> Table {
         let rows = vec![Row::new(vec![
             Cell::from(Span::styled(
-                "'/' Search",
+                "'q' Exit",
                 Style::default().fg(Color::White),
             )),
-            Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
-            Cell::from(Span::styled(
-                "'i' Info Panel",
-                Style::default().fg(Color::White),
-            )),
+            Cell::from(Span::styled("'i' Info Panel", Style::default().fg(Color::White))),
             Cell::from(Span::styled(
                 "'r' Show Recent First",
                 Style::default().fg(Color::White),
@@ -252,10 +167,9 @@ impl RenderHelp for InstanceTable {
                 Constraint::Min(10),
             ],
         );
-        frame.render_widget(table, area);
+        table
     }
 }
-
 
 pub enum InstanceTableMessage {
     Exit,
@@ -297,7 +211,15 @@ impl Component<InstanceTableMessage> for InstanceTable {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        self.render(frame, area);
+        let vertical_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .split(area);
+
+        let widget = self.get_table();
+        frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
+        let help = self.get_help();
+        frame.render_widget(help, vertical_layout[1]);
     }
     
     fn handle_event(&self,event: Event)-> Option<InstanceTableMessage> {
