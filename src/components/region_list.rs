@@ -94,40 +94,8 @@ impl RegionList {
     fn current(&self) -> Option<String> {
         self.state.selected().map(|i| self.items[i].clone())
     }
-}
 
-impl HandleAction for RegionList {
-    fn handle_action(&mut self, action: Event) -> Result<Action> {
-        let action = match action {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('q') => Action::Exit,
-                KeyCode::Char('h') => Action::Hide(self.current().unwrap()),
-                KeyCode::Char('r') => Action::Reset,
-                KeyCode::Char('c') => Action::OpenConfig,
-                KeyCode::Char('*') => Action::ToggleFavorite(self.current().unwrap()),
-                KeyCode::Down => {
-                    self.next();
-                    Action::Noop
-                }
-                KeyCode::Up => {
-                    self.previous();
-                    Action::Noop
-                }
-                KeyCode::Right | KeyCode::Enter => match self.current() {
-                    Some(str) => Action::Return(str.to_owned()),
-                    None => Action::Noop,
-                },
-                _ => Action::Noop,
-            },
-            _ => Action::Noop,
-        };
-        Ok(action)
-    }
-}
-
-#[allow(refining_impl_trait)]
-impl View for RegionList {
-    fn get_widget(&self) -> List {
+    fn get_list(&self) -> List {
         let items: Vec<ListItem> = self
             .items
             .iter()
@@ -151,23 +119,8 @@ impl View for RegionList {
             )
             .highlight_symbol(">> ")
     }
-}
 
-impl Render for RegionList {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let vertical_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
-            .split(area);
-
-        let widget = self.get_widget();
-        frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
-        self.render_help(frame, vertical_layout[1]);
-    }
-}
-
-impl RenderHelp for RegionList {
-    fn render_help(&mut self, frame: &mut Frame, area: Rect) {
+    fn get_help(&self) -> Table {
         let rows = vec![
             Row::new(vec![
                 Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
@@ -188,7 +141,7 @@ impl RenderHelp for RegionList {
                 )),
             ]),
         ];
-        let table = Table::new(
+        Table::new(
             rows,
             vec![
                 Constraint::Min(10),
@@ -196,8 +149,7 @@ impl RenderHelp for RegionList {
                 Constraint::Min(10),
                 Constraint::Min(10),
             ],
-        );
-        frame.render_widget(table, area);
+        )
     }
 }
 
@@ -210,12 +162,6 @@ pub enum RegionListEvent {
     Up,
     Down,
     Enter,
-}
-
-pub enum RegionListMessage {
-    Exit,
-    OpenConfig,
-    Enter(String),
 }
 
 impl Component<RegionListEvent> for RegionList {
@@ -280,6 +226,14 @@ impl Component<RegionListEvent> for RegionList {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        self.render(frame, area);
+        let vertical_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .split(area);
+
+        let list = self.get_list();
+        frame.render_stateful_widget(list, vertical_layout[0], &mut self.state.clone());
+        let help = self.get_help();
+        frame.render_widget(help, vertical_layout[1]);
     }
 }

@@ -3,7 +3,7 @@ use std::{ io::Stdout, sync::{Arc, Mutex}};
 use crossterm::event;
 use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, Terminal};
 
-use crate::{app::config::Config, components::{header_tabs::{HeaderTabs, Tab}, region_list::{RegionList, RegionListMessage}, Action, Component}};
+use crate::{app::config::Config, components::{header_tabs::{HeaderTabs, Tab}, region_list::RegionList, Action, Component}};
 
 use anyhow::Result;
 

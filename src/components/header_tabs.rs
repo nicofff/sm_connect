@@ -1,4 +1,4 @@
-use ratatui::{style::{Style, Stylize}, text::Line, widgets::{Block, Borders, Tabs}};
+use ratatui::{layout::Rect, style::{Style, Stylize}, text::Line, widgets::{Block, Borders, Tabs}, Frame};
 
 use super::Component;
 
@@ -61,7 +61,7 @@ impl Component<HeaderTabMessage> for HeaderTabs {
         Ok(None)
     }
 
-    fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
         let tabs = Tabs::new(self.get_all_tabs())
         .block(Block::bordered())
         .style(Style::default().white())
