@@ -1,7 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;
 use ratatui::widgets::Paragraph;
-use ratatui::{text::Text, Frame};
+use ratatui::{Frame, text::Text};
 
 use crate::components::Action;
 
@@ -32,7 +32,7 @@ impl TextInput {
             search_cursor_position: 0,
         }
     }
-    
+
     #[allow(dead_code)]
     pub fn get_cursor_position(&self) -> usize {
         self.search_cursor_position + self.prompt.len()
@@ -127,31 +127,31 @@ impl Component<TextInputMessage> for TextInput {
             TextInputMessage::Char(c) => {
                 self.enter_char(c);
                 return Ok(Some(Action::PartialReturn(self.get_value())));
-            },
+            }
             TextInputMessage::Backspace => {
                 self.delete_char();
                 return Ok(Some(Action::PartialReturn(self.get_value())));
-            },
+            }
             TextInputMessage::Right => {
                 self.move_cursor_right();
                 return Ok(None);
-            },
+            }
             TextInputMessage::Left => {
                 self.move_cursor_left();
                 return Ok(None);
-            },
+            }
             TextInputMessage::Esc => {
                 return Ok(Some(Action::Exit));
-            },
-            TextInputMessage::Up  => {
+            }
+            TextInputMessage::Up => {
                 return Ok(Some(Action::ReturnWithKeyUp));
-            },
+            }
             TextInputMessage::Down => {
                 return Ok(Some(Action::ReturnWithKeyDown));
-            },
+            }
             TextInputMessage::Enter => {
                 return Ok(Some(Action::Return(self.get_value())));
-            },  
+            }
         }
     }
 
@@ -160,21 +160,19 @@ impl Component<TextInputMessage> for TextInput {
         frame.render_widget(widget, area);
     }
 
-    fn handle_event(&self,event: Event)-> Option<TextInputMessage> {
+    fn handle_event(&self, event: Event) -> Option<TextInputMessage> {
         match event {
-            Event::Key(key) => {
-                match key.code {
-                    KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
-                    KeyCode::Backspace => Some(TextInputMessage::Backspace),
-                    KeyCode::Right => Some(TextInputMessage::Right),
-                    KeyCode::Left => Some(TextInputMessage::Left),
-                    KeyCode::Esc => Some(TextInputMessage::Esc),
-                    KeyCode::Up => Some(TextInputMessage::Up),
-                    KeyCode::Down => Some(TextInputMessage::Down),
-                    KeyCode::Enter => Some(TextInputMessage::Enter),
-                    _ => None,
-                }
-            }
+            Event::Key(key) => match key.code {
+                KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
+                KeyCode::Backspace => Some(TextInputMessage::Backspace),
+                KeyCode::Right => Some(TextInputMessage::Right),
+                KeyCode::Left => Some(TextInputMessage::Left),
+                KeyCode::Esc => Some(TextInputMessage::Esc),
+                KeyCode::Up => Some(TextInputMessage::Up),
+                KeyCode::Down => Some(TextInputMessage::Down),
+                KeyCode::Enter => Some(TextInputMessage::Enter),
+                _ => None,
+            },
             _ => None,
         }
     }

@@ -1,11 +1,11 @@
 use crate::aws::InstanceInfo;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::Span,
     widgets::{Block, Borders, Cell, Row, Table, TableState},
-    Frame,
 };
 
 use super::{Action, Component};
@@ -20,7 +20,6 @@ pub struct InstanceTable {
 }
 
 impl InstanceTable {
-
     pub fn new() -> InstanceTable {
         let state = TableState::default();
         InstanceTable {
@@ -52,8 +51,11 @@ impl InstanceTable {
             .cloned()
             .collect();
         self.sort_instances();
-        self.state.select(if self.visible_items.len() != 0 {Some(0)} else {None});
-
+        self.state.select(if self.visible_items.len() != 0 {
+            Some(0)
+        } else {
+            None
+        });
     }
 
     fn sort_instances(&mut self) {
@@ -147,11 +149,11 @@ impl InstanceTable {
 
     fn get_help(&self) -> Table {
         let rows = vec![Row::new(vec![
+            Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
             Cell::from(Span::styled(
-                "'q' Exit",
+                "'i' Info Panel",
                 Style::default().fg(Color::White),
             )),
-            Cell::from(Span::styled("'i' Info Panel", Style::default().fg(Color::White))),
             Cell::from(Span::styled(
                 "'r' Show Recent First",
                 Style::default().fg(Color::White),
@@ -195,12 +197,10 @@ impl Component<InstanceTableMessage> for InstanceTable {
                 self.next();
                 Ok(None)
             }
-            InstanceTableMessage::Enter => {
-                match self.current() {
-                    Some(item) => Ok(Some(Action::ReturnInstance(item))),
-                    None => Ok(None),
-                }
-            }
+            InstanceTableMessage::Enter => match self.current() {
+                Some(item) => Ok(Some(Action::ReturnInstance(item))),
+                None => Ok(None),
+            },
             InstanceTableMessage::Search => Ok(Some(Action::Search)),
             InstanceTableMessage::RecentFirst => {
                 self.recent_first = !self.recent_first;
@@ -221,8 +221,8 @@ impl Component<InstanceTableMessage> for InstanceTable {
         let help = self.get_help();
         frame.render_widget(help, vertical_layout[1]);
     }
-    
-    fn handle_event(&self,event: Event)-> Option<InstanceTableMessage> {
+
+    fn handle_event(&self, event: Event) -> Option<InstanceTableMessage> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Some(InstanceTableMessage::Exit),

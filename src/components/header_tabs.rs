@@ -1,9 +1,15 @@
-use ratatui::{layout::Rect, style::{Style, Stylize}, text::Line, widgets::{Block, Tabs}, Frame};
+use ratatui::{
+    Frame,
+    layout::Rect,
+    style::{Style, Stylize},
+    text::Line,
+    widgets::{Block, Tabs},
+};
 
 use super::Component;
 
 pub struct HeaderTabs {
-    selected: Option<Tab>
+    selected: Option<Tab>,
 }
 #[derive(Debug, Clone, Copy)]
 pub enum Tab {
@@ -44,7 +50,7 @@ impl HeaderTabs {
     pub fn set_selected(&mut self, tab: Tab) {
         self.selected = Some(tab);
     }
-    
+
     pub fn get_all_tabs(&self) -> Vec<Tab> {
         vec![Tab::Region, Tab::Instances, Tab::Connection]
     }
@@ -59,14 +65,14 @@ impl Component<HeaderTabMessage> for HeaderTabs {
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let tabs = Tabs::new(self.get_all_tabs())
-        .block(Block::bordered())
-        .style(Style::default().white())
-        .highlight_style(Style::default().yellow())
-        .select(self.selected.map(|tab| tab.get_index()));
+            .block(Block::bordered())
+            .style(Style::default().white())
+            .highlight_style(Style::default().yellow())
+            .select(self.selected.map(|tab| tab.get_index()));
         frame.render_widget(tabs, area);
     }
 
-    fn handle_event(&self,_event: crossterm::event::Event)-> Option<HeaderTabMessage> {
+    fn handle_event(&self, _event: crossterm::event::Event) -> Option<HeaderTabMessage> {
         None
     }
 }

@@ -1,13 +1,13 @@
 use crate::components::{Action, Component};
+use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
-    Frame,
 };
-use anyhow::Result;
 #[derive(Debug, Clone, Copy)]
 pub enum ConfigOption {
     ResetRecent,
@@ -97,7 +97,6 @@ impl ConfigList {
         ))])];
         Table::new(rows, vec![Constraint::Min(10)])
     }
-
 }
 
 pub enum ConfigListMessage {
@@ -130,10 +129,7 @@ impl Component<ConfigListMessage> for ConfigList {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Percentage(90),
-                Constraint::Percentage(10),
-            ])
+            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
             .split(area);
 
         let list = self.get_list();
@@ -142,7 +138,7 @@ impl Component<ConfigListMessage> for ConfigList {
         frame.render_widget(help, vertical_layout[1]);
     }
 
-    fn handle_event(&self,event: Event)-> Option<ConfigListMessage> {
+    fn handle_event(&self, event: Event) -> Option<ConfigListMessage> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Some(ConfigListMessage::Exit),

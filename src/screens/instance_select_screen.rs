@@ -2,13 +2,25 @@ use std::io::Stdout;
 
 use aws_config::Region;
 use crossterm::event;
-use ratatui::{layout::{Constraint, Layout}, prelude::CrosstermBackend, widgets::Clear, Terminal};
+use ratatui::{
+    Terminal,
+    layout::{Constraint, Layout},
+    prelude::CrosstermBackend,
+    widgets::Clear,
+};
 
-use crate::{aws::{fetch_instances, InstanceInfo}, components::{header_tabs::{HeaderTabs, Tab}, instance_table::InstanceTable, text_input::TextInput, Action, Component}};
+use crate::{
+    aws::{InstanceInfo, fetch_instances},
+    components::{
+        Action, Component,
+        header_tabs::{HeaderTabs, Tab},
+        instance_table::InstanceTable,
+        text_input::TextInput,
+    },
+};
 
 use super::Screen;
 use anyhow::Result;
-
 
 pub struct InstanceSelectScreen {
     header_tabs_component: HeaderTabs,
@@ -23,7 +35,6 @@ pub enum Outcome {
 }
 
 impl InstanceSelectScreen {
-
     pub fn new() -> InstanceSelectScreen {
         let instance_table_component = InstanceTable::new();
         let search_component = TextInput::default();
@@ -54,18 +65,15 @@ impl InstanceSelectScreen {
             self.instance_table_component.view(frame, layout[1]);
             if self.search_active {
                 let search_layout = Layout::default()
-                .direction(ratatui::layout::Direction::Vertical)
-                .constraints(vec![
-                    Constraint::Percentage(90),
-                    Constraint::Percentage(10),
-                ])
-                .split(layout[1]);
+                    .direction(ratatui::layout::Direction::Vertical)
+                    .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+                    .split(layout[1]);
                 frame.render_widget(Clear, search_layout[1]); //this clears out the background
                 //TODO: Since we are drawing on top, maybe give it some distinct style?
                 self.search_component.view(frame, search_layout[1]);
             }
         })?;
-        
+
         Ok(())
     }
 }
@@ -80,7 +88,9 @@ impl Screen<Outcome> for InstanceSelectScreen {
                 let action = self.instance_table_component.update(message)?;
                 match action {
                     Some(Action::Exit) => return Ok(Outcome::Exit),
-                    Some(Action::ReturnInstance(instance)) => return Ok(Outcome::InstanceSelected(instance)),
+                    Some(Action::ReturnInstance(instance)) => {
+                        return Ok(Outcome::InstanceSelected(instance));
+                    }
                     Some(Action::Search) => {
                         self.search_active = true;
                     }
@@ -111,7 +121,6 @@ impl Screen<Outcome> for InstanceSelectScreen {
                     _ => {}
                 }
             }
-            
         }
     }
 }

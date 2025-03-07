@@ -1,7 +1,25 @@
-use std::{io::Stdout, sync::{Arc, Mutex}};
+use std::{
+    io::Stdout,
+    sync::{Arc, Mutex},
+};
 
-use crate::{app::config::Config, components::{config_list::{ConfigList, ConfigOption}, text_input::TextInput, Action, Component}, history::History};
-use ratatui::{layout::{Constraint, Layout}, prelude::CrosstermBackend, style::{Color, Stylize}, text::Line, widgets::Clear, Terminal};
+use crate::{
+    app::config::Config,
+    components::{
+        Action, Component,
+        config_list::{ConfigList, ConfigOption},
+        text_input::TextInput,
+    },
+    history::History,
+};
+use ratatui::{
+    Terminal,
+    layout::{Constraint, Layout},
+    prelude::CrosstermBackend,
+    style::{Color, Stylize},
+    text::Line,
+    widgets::Clear,
+};
 
 use anyhow::Result;
 
@@ -21,7 +39,7 @@ pub enum Outcome {
 }
 
 impl ConfigScreen {
-    pub fn new(config:  Arc<Mutex<Config>>) -> Self {
+    pub fn new(config: Arc<Mutex<Config>>) -> Self {
         let config_list = ConfigList::new();
         let input_component = TextInput::new("Value: ".to_string());
         Self {
@@ -39,17 +57,12 @@ impl ConfigScreen {
             let layout = Layout::default()
                 .direction(ratatui::layout::Direction::Vertical)
                 .margin(0)
-                .constraints(vec![
-                    Constraint::Percentage(100),
-                ])
+                .constraints(vec![Constraint::Percentage(100)])
                 .split(frame.area());
             self.config_list.view(frame, layout[0]);
             let overlay_layout = Layout::default()
                 .direction(ratatui::layout::Direction::Vertical)
-                .constraints(vec![
-                    Constraint::Percentage(90),
-                    Constraint::Percentage(10),
-                ])
+                .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
                 .split(layout[0]);
             if self.input_active {
                 frame.render_widget(Clear, overlay_layout[1]);
@@ -70,8 +83,7 @@ impl ConfigScreen {
                     frame.render_widget(line, overlay_layout[1]);
                 }
                 None => {}
-            }            
-            
+            }
         })?;
         Ok(())
     }
@@ -101,7 +113,8 @@ impl Screen<Outcome> for ConfigScreen {
                             ConfigOption::SetRecentTimeout => {
                                 self.modifying_action = Some(ConfigOption::SetRecentTimeout);
                                 self.input_active = true;
-                                let current_value = self.config.lock().unwrap().get_recent_timeout();
+                                let current_value =
+                                    self.config.lock().unwrap().get_recent_timeout();
                                 self.input_component.set_value(current_value.to_string());
                             }
                         }
@@ -121,10 +134,7 @@ impl Screen<Outcome> for ConfigScreen {
                     Some(Action::Return(search)) => {
                         if let Some(ConfigOption::SetRecentTimeout) = self.modifying_action {
                             if let Ok(timeout) = search.parse::<u64>() {
-                                self.config
-                                    .lock()
-                                    .unwrap()
-                                    .set_recent_timeout(timeout)?;
+                                self.config.lock().unwrap().set_recent_timeout(timeout)?;
                                 self.last_operation_success = Some(true);
                             } else {
                                 self.last_operation_success = Some(false);

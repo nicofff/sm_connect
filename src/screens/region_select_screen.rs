@@ -1,18 +1,31 @@
-use std::{ io::Stdout, sync::{Arc, Mutex}};
+use std::{
+    io::Stdout,
+    sync::{Arc, Mutex},
+};
 
 use crossterm::event;
-use ratatui::{layout::{Constraint, Direction, Layout}, prelude::CrosstermBackend, Terminal};
+use ratatui::{
+    Terminal,
+    layout::{Constraint, Direction, Layout},
+    prelude::CrosstermBackend,
+};
 
-use crate::{app::config::Config, components::{header_tabs::{HeaderTabs, Tab}, region_list::RegionList, Action, Component}};
+use crate::{
+    app::config::Config,
+    components::{
+        Action, Component,
+        header_tabs::{HeaderTabs, Tab},
+        region_list::RegionList,
+    },
+};
 
 use anyhow::Result;
 
 use super::Screen;
 
-pub struct RegionSelectScreen{
+pub struct RegionSelectScreen {
     header_tabs_component: HeaderTabs,
-    region_select_component: RegionList
-
+    region_select_component: RegionList,
 }
 
 pub enum Outcome {
@@ -28,7 +41,7 @@ impl RegionSelectScreen {
         header_tabs_component.set_selected(Tab::Region);
         Self {
             header_tabs_component,
-            region_select_component
+            region_select_component,
         }
     }
 

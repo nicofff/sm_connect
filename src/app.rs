@@ -1,10 +1,10 @@
 use crate::aws::InstanceInfo;
 
+use crate::screens::Screen;
 use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
 use crate::screens::region_select_screen;
 use crate::screens::region_select_screen::RegionSelectScreen;
-use crate::screens::Screen;
 use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
@@ -71,12 +71,11 @@ impl App {
                         region_select_screen::Outcome::RegionSelected(region) => {
                             self.selected_screen = SelectedScreen::InstanceSelect;
                             match self.instance_selection_screen.with_region(region).await {
-                                Ok(_) => {},
+                                Ok(_) => {}
                                 Err(_e) => {
                                     return Err(RuntimeError::FetchInstanceError.into());
                                 }
                             }
-
                         }
                         region_select_screen::Outcome::OpenConfig => {
                             self.selected_screen = SelectedScreen::Config;
@@ -87,20 +86,20 @@ impl App {
                     match self.instance_selection_screen.run(&mut self.terminal)? {
                         crate::screens::instance_select_screen::Outcome::Exit => {
                             self.selected_screen = SelectedScreen::RegionSelect;
-                        },
-                        crate::screens::instance_select_screen::Outcome::InstanceSelected(instance_info) => {
+                        }
+                        crate::screens::instance_select_screen::Outcome::InstanceSelected(
+                            instance_info,
+                        ) => {
                             should_exit = true;
                             return_value = Some(instance_info);
-                        },
-                    }
-                }
-                SelectedScreen::Config => {
-                    match self.config_screen.run(&mut self.terminal)? {
-                        crate::screens::config_screen::Outcome::Exit => {
-                            self.selected_screen = SelectedScreen::RegionSelect;
                         }
                     }
                 }
+                SelectedScreen::Config => match self.config_screen.run(&mut self.terminal)? {
+                    crate::screens::config_screen::Outcome::Exit => {
+                        self.selected_screen = SelectedScreen::RegionSelect;
+                    }
+                },
             }
             // handle events
             // let event = event::read()?;
@@ -174,7 +173,6 @@ impl App {
             None => Err(RuntimeError::UserExit.into()),
         }
     }
-
 }
 
 impl Drop for App {

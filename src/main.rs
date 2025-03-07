@@ -1,7 +1,7 @@
 mod aws;
 use aws::InstanceInfo;
-mod ui;
 mod app;
+mod ui;
 use app::App;
 use std::process::Command;
 mod components;
@@ -45,7 +45,7 @@ fn connect(instance: InstanceInfo) -> Result<()> {
 
     // Catch SIGINT, SIGSTP signal and do nothing
     // So that actually ctrl+c / ctrl+z works on the aws ssm session instead of killing / stopping us
-    let mut _signals = Signals::new([SIGINT,SIGTSTP])?;
+    let mut _signals = Signals::new([SIGINT, SIGTSTP])?;
 
     child.wait()?;
     Ok(())

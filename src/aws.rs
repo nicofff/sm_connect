@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use anyhow::Result;
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_ec2::{
-    types::{Filter, Instance},
     Client,
+    types::{Filter, Instance},
 };
 
 use crate::history::History;
@@ -79,10 +79,12 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
         .load()
         .await;
     let client = Client::new(&config);
-    let filters = vec![Filter::builder()
-        .set_name(Some("instance-state-name".to_string()))
-        .set_values(Some(vec!["running".to_string()]))
-        .build()];
+    let filters = vec![
+        Filter::builder()
+            .set_name(Some("instance-state-name".to_string()))
+            .set_values(Some(vec!["running".to_string()]))
+            .build(),
+    ];
     let result = client
         .describe_instances()
         .set_filters(Some(filters))

@@ -5,7 +5,8 @@ use serde_json::{from_str, to_string_pretty as to_string};
 use std::{
     collections::HashMap,
     io::{Read, Write},
-    path::PathBuf, sync::{Arc, Mutex},
+    path::PathBuf,
+    sync::{Arc, Mutex},
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]

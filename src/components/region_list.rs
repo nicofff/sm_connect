@@ -46,7 +46,6 @@ impl RegionList {
         self.sort_list();
     }
 
-
     fn toggle_favorite_region(&mut self) -> Result<()> {
         let Some(region) = self.current() else {
             return Ok(());
@@ -224,16 +223,16 @@ impl Component<RegionListEvent> for RegionList {
             RegionListEvent::HideRegion => {
                 self.hide_region()?;
                 Ok(None)
-            },
+            }
             RegionListEvent::Reset => {
                 self.reset_hidden_regions()?;
                 Ok(None)
-            },
+            }
             RegionListEvent::OpenConfig => Ok(Some(Action::OpenConfig)),
             RegionListEvent::ToggleFavorite => {
                 self.toggle_favorite_region()?;
                 Ok(None)
-            },
+            }
             RegionListEvent::Down => {
                 self.next();
                 Ok(None)
