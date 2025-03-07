@@ -36,9 +36,9 @@ impl Tab {
     }
 }
 
-impl Into<Line<'static>> for Tab {
-    fn into(self) -> Line<'static> {
-        Line::raw(self.get_tab())
+impl From<Tab> for Line<'static> {
+    fn from(val: Tab) -> Self {
+        Line::raw(val.get_tab())
     }
 }
 

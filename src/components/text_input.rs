@@ -126,31 +126,31 @@ impl Component<TextInputMessage> for TextInput {
         match msg {
             TextInputMessage::Char(c) => {
                 self.enter_char(c);
-                return Ok(Some(Action::PartialReturn(self.get_value())));
+                Ok(Some(Action::PartialReturn(self.get_value())))
             }
             TextInputMessage::Backspace => {
                 self.delete_char();
-                return Ok(Some(Action::PartialReturn(self.get_value())));
+                Ok(Some(Action::PartialReturn(self.get_value())))
             }
             TextInputMessage::Right => {
                 self.move_cursor_right();
-                return Ok(None);
+                Ok(None)
             }
             TextInputMessage::Left => {
                 self.move_cursor_left();
-                return Ok(None);
+                Ok(None)
             }
             TextInputMessage::Esc => {
-                return Ok(Some(Action::Exit));
+                Ok(Some(Action::Exit))
             }
             TextInputMessage::Up => {
-                return Ok(Some(Action::ReturnWithKeyUp));
+                Ok(Some(Action::ReturnWithKeyUp))
             }
             TextInputMessage::Down => {
-                return Ok(Some(Action::ReturnWithKeyDown));
+                Ok(Some(Action::ReturnWithKeyDown))
             }
             TextInputMessage::Enter => {
-                return Ok(Some(Action::Return(self.get_value())));
+                Ok(Some(Action::Return(self.get_value())))
             }
         }
     }

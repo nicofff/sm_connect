@@ -51,7 +51,7 @@ impl InstanceTable {
             .cloned()
             .collect();
         self.sort_instances();
-        self.state.select(if self.visible_items.len() != 0 {
+        self.state.select(if !self.visible_items.is_empty() {
             Some(0)
         } else {
             None
