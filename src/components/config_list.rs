@@ -1,4 +1,4 @@
-use crate::components::{Action, Component, HandleAction, Render, RenderHelp, View};
+use crate::components::{Action, Component};
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -25,7 +25,7 @@ impl From<ConfigOption> for String {
 
 const CONFIG_OPTIONS: [ConfigOption; 2] =
     [ConfigOption::ResetRecent, ConfigOption::SetRecentTimeout];
-    
+
 #[derive(Debug)]
 pub struct ConfigList {
     state: ListState,
@@ -69,35 +69,8 @@ impl ConfigList {
     fn current(&self) -> Option<ConfigOption> {
         self.state.selected().map(|i| CONFIG_OPTIONS[i])
     }
-}
 
-impl HandleAction for ConfigList {
-    fn handle_action(&mut self, action: Event) -> Result<Action> {
-        match action {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('q') => Ok(Action::Exit),
-                KeyCode::Down => {
-                    self.next();
-                    Ok(Action::Noop)
-                }
-                KeyCode::Up => {
-                    self.previous();
-                    Ok(Action::Noop)
-                }
-                KeyCode::Right | KeyCode::Enter => match self.current() {
-                    Some(option) => Ok(Action::ReturnConfig(option)),
-                    None => Ok(Action::Noop),
-                },
-                _ => Ok(Action::Noop),
-            },
-            _ => Ok(Action::Noop),
-        }
-    }
-}
-
-#[allow(refining_impl_trait)]
-impl View for ConfigList {
-    fn get_widget(&self) -> List {
+    fn get_list(&self) -> List {
         let items: Vec<ListItem> = CONFIG_OPTIONS
             .iter()
             .map(|i| {
@@ -116,35 +89,16 @@ impl View for ConfigList {
             )
             .highlight_symbol(">> ")
     }
-}
 
-impl Render for ConfigList {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let vertical_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Percentage(90),
-                Constraint::Percentage(10),
-            ])
-            .split(area);
-
-        let widget = self.get_widget();
-        frame.render_stateful_widget(widget, vertical_layout[0], &mut self.state.clone());
-        self.render_help(frame, vertical_layout[1]);
-    }
-}
-
-impl RenderHelp for ConfigList {
-    fn render_help(&mut self, frame: &mut Frame, area: Rect) {
+    fn get_help(&self) -> Table {
         let rows = vec![Row::new(vec![Cell::from(Span::styled(
             "'q' Exit",
             Style::default().fg(Color::White),
         ))])];
-        let table = Table::new(rows, vec![Constraint::Min(10)]);
-        frame.render_widget(table, area);
+        Table::new(rows, vec![Constraint::Min(10)])
     }
-}
 
+}
 
 pub enum ConfigListMessage {
     Exit,
@@ -174,7 +128,18 @@ impl Component<ConfigListMessage> for ConfigList {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        self.render(frame, area);
+        let vertical_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(90),
+                Constraint::Percentage(10),
+            ])
+            .split(area);
+
+        let list = self.get_list();
+        frame.render_stateful_widget(list, vertical_layout[0], &mut self.state.clone());
+        let help = self.get_help();
+        frame.render_widget(help, vertical_layout[1]);
     }
 
     fn handle_event(&self,event: Event)-> Option<ConfigListMessage> {

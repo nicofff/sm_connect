@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use crate::app::config::Config;
 
-use super::{Action, Component, HandleAction, Render, RenderHelp, View};
+use super::{Action, Component};
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
