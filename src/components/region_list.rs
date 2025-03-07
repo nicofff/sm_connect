@@ -36,7 +36,7 @@ impl RegionList {
         }
     }
 
-    pub fn update_items(&mut self, items: Vec<String>) {
+    fn update_items(&mut self, items: Vec<String>) {
         self.items = items;
         if let Some(i) = self.state.selected_mut() {
             if *i >= self.items.len() {
@@ -46,9 +46,42 @@ impl RegionList {
         self.sort_list();
     }
 
-    pub fn set_favorites(&mut self, favorites: Vec<String>) {
-        self.favorites = favorites;
+
+    fn toggle_favorite_region(&mut self) -> Result<()> {
+        let Some(region) = self.current() else {
+            return Ok(());
+        };
+        {
+            let mut config = self.config.lock().unwrap();
+            config.toggle_favorite_region(region)?;
+            self.favorites = config.get_favorite_regions();
+        }
         self.sort_list();
+        Ok(())
+    }
+
+    fn hide_region(&mut self) -> Result<()> {
+        let Some(region) = self.current() else {
+            return Ok(());
+        };
+        let regions = {
+            let mut config = self.config.lock().unwrap();
+            config.hide_region(region)?;
+            config.get_visible_regions()
+        };
+        self.update_items(regions);
+        self.sort_list();
+        Ok(())
+    }
+
+    fn reset_hidden_regions(&mut self) -> Result<()> {
+        {
+            let mut config = self.config.lock().unwrap();
+            config.reset_hidden_regions()?;
+            self.items = config.get_visible_regions();
+        }
+        self.sort_list();
+        Ok(())
     }
 
     fn sort_list(&mut self) {
@@ -189,25 +222,16 @@ impl Component<RegionListEvent> for RegionList {
         match msg {
             RegionListEvent::Exit => Ok(Some(Action::Exit)),
             RegionListEvent::HideRegion => {
-                let Some(region) = self.current() else {
-                    return Ok(None);
-                };
-                let mut config = self.config.lock().unwrap();
-                config.hide_region(region)?;
+                self.hide_region()?;
                 Ok(None)
             },
             RegionListEvent::Reset => {
-                let mut config = self.config.lock().unwrap();
-                config.reset_hidden_regions()?;
+                self.reset_hidden_regions()?;
                 Ok(None)
             },
             RegionListEvent::OpenConfig => Ok(Some(Action::OpenConfig)),
             RegionListEvent::ToggleFavorite => {
-                let Some(region) = self.current() else {
-                    return Ok(None);
-                };
-                let mut config = self.config.lock().unwrap();
-                config.toggle_favorite_region(region)?;
+                self.toggle_favorite_region()?;
                 Ok(None)
             },
             RegionListEvent::Down => {

@@ -9,8 +9,7 @@ use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
 use anyhow::Context;
-use ratatui::style::Style;
-use ratatui::{prelude::*, widgets::*};
+use ratatui::prelude::*;
 
 use std::io::Stdout;
 
@@ -30,8 +29,6 @@ pub enum SelectedScreen {
 pub enum RuntimeError {
     #[error("User exited the application")]
     UserExit,
-    #[error("Debugging, region {0}")]
-    Region(String),
     #[error("Error fetching instances. Check your AWS credentials and try again.")]
     FetchInstanceError,
 }
@@ -178,28 +175,6 @@ impl App {
         }
     }
 
-    /**
-     * Creates the app layout and returns the area for components to render themselves
-     */
-    fn get_component_render_area(&self, frame: &mut Frame) -> Rect {
-        let outer = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints([Constraint::Max(3), Constraint::Fill(1)].as_ref())
-            .split(frame.area());
-
-        let tabs = Tabs::new(vec!["Region", "Instances", "Connection"])
-            .block(Block::bordered())
-            .style(Style::default().white())
-            .highlight_style(Style::default().yellow())
-            .select(match self.selected_screen {
-                SelectedScreen::RegionSelect => Some(0),
-                SelectedScreen::InstanceSelect => Some(1),
-                _ => None,
-            });
-        frame.render_widget(tabs, outer[0]);
-        outer[1]
-    }
 }
 
 impl Drop for App {

@@ -100,16 +100,12 @@ impl Screen<Outcome> for InstanceSelectScreen {
                     Some(Action::PartialReturn(search)) => {
                         self.instance_table_component.apply_filter(search);
                     }
-                    Some(Action::ReturnWithKey(key)) => {
-                        match key {
-                            event::KeyCode::Up => {
-                                self.instance_table_component.previous();
-                            }
-                            event::KeyCode::Down => {
-                                self.instance_table_component.next();
-                            }
-                            _ => {}
-                        }
+                    Some(Action::ReturnWithKeyUp) => {
+                        self.instance_table_component.previous();
+                        self.search_active = false;
+                    }
+                    Some(Action::ReturnWithKeyDown) => {
+                        self.instance_table_component.next();
                         self.search_active = false;
                     }
                     _ => {}

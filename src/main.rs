@@ -1,7 +1,6 @@
 mod aws;
 use aws::InstanceInfo;
 mod ui;
-use ui::{restore_terminal, setup_terminal};
 mod app;
 use app::App;
 use std::process::Command;
@@ -9,7 +8,7 @@ mod components;
 mod history;
 use history::{History, HistoryEntry};
 mod screens;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use signal_hook::{consts::signal::*, iterator::Signals};
 
 #[tokio::main]

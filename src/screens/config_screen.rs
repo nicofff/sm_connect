@@ -1,7 +1,7 @@
 use std::{io::Stdout, sync::{Arc, Mutex}};
 
 use crate::{app::config::Config, components::{config_list::{ConfigList, ConfigOption}, text_input::TextInput, Action, Component}, history::History};
-use ratatui::{layout::{Constraint, Layout, Rect}, prelude::CrosstermBackend, style::{Color, Stylize}, text::Line, widgets::Clear, Frame, Terminal};
+use ratatui::{layout::{Constraint, Layout}, prelude::CrosstermBackend, style::{Color, Stylize}, text::Line, widgets::Clear, Terminal};
 
 use anyhow::Result;
 

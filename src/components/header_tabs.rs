@@ -1,4 +1,4 @@
-use ratatui::{layout::Rect, style::{Style, Stylize}, text::Line, widgets::{Block, Borders, Tabs}, Frame};
+use ratatui::{layout::Rect, style::{Style, Stylize}, text::Line, widgets::{Block, Tabs}, Frame};
 
 use super::Component;
 
@@ -44,11 +44,7 @@ impl HeaderTabs {
     pub fn set_selected(&mut self, tab: Tab) {
         self.selected = Some(tab);
     }
-
-    pub fn clear_selected(&mut self) {
-        self.selected = None;
-    }
-
+    
     pub fn get_all_tabs(&self) -> Vec<Tab> {
         vec![Tab::Region, Tab::Instances, Tab::Connection]
     }

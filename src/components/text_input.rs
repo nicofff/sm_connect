@@ -32,7 +32,8 @@ impl TextInput {
             search_cursor_position: 0,
         }
     }
-
+    
+    #[allow(dead_code)]
     pub fn get_cursor_position(&self) -> usize {
         self.search_cursor_position + self.prompt.len()
     }
