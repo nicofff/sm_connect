@@ -24,9 +24,9 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    pub fn new(instance_id: String) -> HistoryEntry {
+    pub fn new(instance_id: impl Into<String>) -> HistoryEntry {
         HistoryEntry {
-            instance_id,
+            instance_id: instance_id.into(),
             when: get_current_time(),
         }
     }
@@ -89,8 +89,12 @@ impl History {
     }
 
     pub fn reset() -> Result<()> {
-        let entries = HashMap::new();
-        Self::write(&entries)?;
+        let file = Self::get_history_path()?;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(file)?;
+        file.flush()?;
         Ok(())
     }
 

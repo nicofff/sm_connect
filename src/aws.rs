@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use anyhow::Result;
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_ec2::{
-    types::{Filter, Instance},
     Client,
+    types::{Filter, Instance},
 };
 
 use crate::history::History;
@@ -12,20 +12,32 @@ use crate::history::History;
 #[derive(Debug, Clone)]
 pub struct InstanceInfo {
     region: Region,
-    raw_instance_data: Instance,
+    name: String,
+    instance_id: String,
+    public_ip: String,
+    private_ip: String,
     last_access: Option<u64>,
 }
 
-impl InstanceInfo {
-    pub fn get_name(&self) -> String {
-        self.get_tags()
-            .entry("Name".to_string())
-            .or_default()
-            .to_owned()
+impl From<(Instance, Region)> for InstanceInfo {
+    fn from(val: (Instance, Region)) -> Self {
+        let (instance, region) = val;
+        let tags = InstanceInfo::get_tags_map(&instance);
+        let name = tags.get("Name").unwrap_or(&"".to_string()).to_string();
+        InstanceInfo {
+            region,
+            name,
+            instance_id: instance.instance_id.unwrap_or_default(),
+            public_ip: instance.public_ip_address.unwrap_or_default(),
+            private_ip: instance.private_ip_address.unwrap_or_default(),
+            last_access: None,
+        }
     }
+}
 
-    pub fn get_tags(&self) -> HashMap<String, String> {
-        let Some(ref tags) = self.raw_instance_data.tags else {
+impl InstanceInfo {
+    fn get_tags_map(instance: &Instance) -> HashMap<String, String> {
+        let Some(ref tags) = instance.tags else {
             return HashMap::new();
         };
         tags.iter()
@@ -38,66 +50,24 @@ impl InstanceInfo {
             .collect()
     }
 
-    pub fn get_instance_id(&self) -> String {
-        self.raw_instance_data
-            .instance_id
-            .clone()
-            .unwrap_or_default()
-    }
-
-    pub fn get_public_ip(&self) -> String {
-        self.raw_instance_data
-            .public_ip_address
-            .clone()
-            .unwrap_or_default()
-    }
-
-    pub fn get_private_ip(&self) -> String {
-        self.raw_instance_data
-            .private_ip_address
-            .clone()
-            .unwrap_or_default()
-    }
-
     pub fn get_region(&self) -> Region {
         self.region.clone()
     }
 
-    pub fn get_image_id(&self) -> String {
-        self.raw_instance_data.image_id.clone().unwrap_or_default()
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 
-    #[allow(dead_code)]
-    pub fn get_raw_instance_data(&self) -> Instance {
-        self.raw_instance_data.clone()
+    pub fn get_instance_id(&self) -> &str {
+        &self.instance_id
     }
 
-    pub fn get_instance_type(&self) -> String {
-        self.raw_instance_data
-            .instance_type
-            .clone()
-            .map_or(String::default(), |x| x.to_string())
+    pub fn get_public_ip(&self) -> &str {
+        &self.public_ip
     }
 
-    pub fn get_launch_time(&self) -> String {
-        self.raw_instance_data
-            .launch_time
-            .map_or(String::default(), |x| x.to_string())
-    }
-
-    pub fn get_vpc_id(&self) -> String {
-        self.raw_instance_data.vpc_id.clone().unwrap_or_default()
-    }
-
-    pub fn get_security_groups(&self) -> Vec<String> {
-        let Some(ref security_groups) = self.raw_instance_data.security_groups else {
-            return Vec::new();
-        };
-
-        security_groups
-            .iter()
-            .map(|sg| sg.group_name.clone().unwrap_or_default())
-            .collect()
+    pub fn get_private_ip(&self) -> &str {
+        &self.private_ip
     }
 
     pub fn get_last_access(&self) -> Option<u64> {
@@ -111,10 +81,12 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
         .load()
         .await;
     let client = Client::new(&config);
-    let filters = vec![Filter::builder()
-        .set_name(Some("instance-state-name".to_string()))
-        .set_values(Some(vec!["running".to_string()]))
-        .build()];
+    let filters = vec![
+        Filter::builder()
+            .set_name(Some("instance-state-name".to_string()))
+            .set_values(Some(vec!["running".to_string()]))
+            .build(),
+    ];
     let result = client
         .describe_instances()
         .set_filters(Some(filters))
@@ -127,15 +99,12 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
         .iter()
         .flat_map(|reservation| reservation.instances.clone().unwrap())
         .map(|instance: Instance| {
-            let cloned = instance.clone();
             let last_accessed = recents
                 .get(&instance.instance_id.clone().unwrap_or_default())
                 .map(|entry| entry.get_when());
-            InstanceInfo {
-                region: region.clone(),
-                raw_instance_data: cloned,
-                last_access: last_accessed,
-            }
+            let mut instance_info: InstanceInfo = (instance, region.clone()).into();
+            instance_info.last_access = last_accessed;
+            instance_info
         })
         .collect();
     Ok(instances)

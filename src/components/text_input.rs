@@ -1,11 +1,12 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;
-use ratatui::widgets::Paragraph;
-use ratatui::{text::Text, Frame};
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Paragraph};
+use ratatui::{Frame, text::Text};
 
-use crate::components::{Action, HandleAction, View};
+use crate::components::Action;
 
-use super::Render;
+use super::Component;
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct TextInput {
@@ -33,6 +34,7 @@ impl TextInput {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_cursor_position(&self) -> usize {
         self.search_cursor_position + self.prompt.len()
     }
@@ -99,61 +101,75 @@ impl TextInput {
         self.search_cursor_position = value.len();
         self.search_input = value;
     }
-}
 
-impl HandleAction for TextInput {
-    fn handle_action(&mut self, action: Event) -> Result<Action> {
-        let action = match action {
-            Event::Key(key) => {
-                match key.code {
-                    KeyCode::Char(c) => {
-                        self.enter_char(c);
-                        Action::PartialReturn(self.search_input.clone())
-                    }
-                    KeyCode::Backspace => {
-                        self.delete_char();
-                        Action::PartialReturn(self.search_input.clone())
-                    }
-                    KeyCode::Right => {
-                        self.move_cursor_right();
-                        Action::Noop
-                    }
-                    KeyCode::Left => {
-                        self.move_cursor_left();
-                        Action::Noop
-                    }
-                    KeyCode::Esc => {
-                        //self.reset_cursor();
-                        Action::Exit
-                    }
-                    KeyCode::Up | KeyCode::Down => {
-                        //self.reset_cursor();
-                        Action::ReturnWithKey(key.code)
-                    }
-                    KeyCode::Enter => {
-                        //self.reset_cursor();
-                        Action::Return(self.search_input.clone())
-                    }
-                    _ => Action::Noop,
-                }
-            }
-            _ => Action::Noop,
-        };
-        Ok(action)
-    }
-}
-
-#[allow(refining_impl_trait)]
-impl View for TextInput {
     fn get_widget(&self) -> Paragraph {
         let text: String = format!("{}{}", self.prompt, self.search_input);
         Paragraph::new(Text::from(text))
     }
 }
 
-impl Render for TextInput {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let widget = self.get_widget();
+pub enum TextInputMessage {
+    Char(char),
+    Backspace,
+    Right,
+    Left,
+    Esc,
+    Up,
+    Down,
+    Enter,
+}
+
+impl Component<TextInputMessage> for TextInput {
+    fn update(&mut self, msg: Option<TextInputMessage>) -> Result<Option<Action>> {
+        let Some(msg) = msg else {
+            return Ok(None);
+        };
+        match msg {
+            TextInputMessage::Char(c) => {
+                self.enter_char(c);
+                Ok(Some(Action::PartialReturn(self.get_value())))
+            }
+            TextInputMessage::Backspace => {
+                self.delete_char();
+                Ok(Some(Action::PartialReturn(self.get_value())))
+            }
+            TextInputMessage::Right => {
+                self.move_cursor_right();
+                Ok(None)
+            }
+            TextInputMessage::Left => {
+                self.move_cursor_left();
+                Ok(None)
+            }
+            TextInputMessage::Esc => Ok(Some(Action::Exit)),
+            TextInputMessage::Up => Ok(Some(Action::ReturnWithKeyUp)),
+            TextInputMessage::Down => Ok(Some(Action::ReturnWithKeyDown)),
+            TextInputMessage::Enter => Ok(Some(Action::Return(self.get_value()))),
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let block = Block::bordered()
+            .border_type(BorderType::Rounded)
+            .style(Style::default().bg(Color::Blue));
+        let widget = self.get_widget().block(block);
         frame.render_widget(widget, area);
+    }
+
+    fn handle_event(&self, event: Event) -> Option<TextInputMessage> {
+        match event {
+            Event::Key(key) => match key.code {
+                KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
+                KeyCode::Backspace => Some(TextInputMessage::Backspace),
+                KeyCode::Right => Some(TextInputMessage::Right),
+                KeyCode::Left => Some(TextInputMessage::Left),
+                KeyCode::Esc => Some(TextInputMessage::Esc),
+                KeyCode::Up => Some(TextInputMessage::Up),
+                KeyCode::Down => Some(TextInputMessage::Down),
+                KeyCode::Enter => Some(TextInputMessage::Enter),
+                _ => None,
+            },
+            _ => None,
+        }
     }
 }

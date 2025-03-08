@@ -6,6 +6,7 @@ use std::{
     collections::HashMap,
     io::{Read, Write},
     path::PathBuf,
+    sync::{Arc, Mutex},
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -69,7 +70,7 @@ const DEFAULT_REGIONS: &[&str] = &[
 ];
 
 impl Config {
-    pub fn new() -> Result<Config> {
+    pub fn new() -> Result<Arc<Mutex<Config>>> {
         let config_path = Config::get_config_path()?;
 
         let mut file = std::fs::OpenOptions::new()
@@ -89,7 +90,7 @@ impl Config {
                 config
             }
         };
-        Ok(config)
+        Ok(Arc::new(Mutex::new(config)))
     }
 
     pub fn persist(&self) -> Result<()> {

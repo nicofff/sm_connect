@@ -1,27 +1,21 @@
 mod aws;
 use aws::InstanceInfo;
-mod ui;
-use ui::{restore_terminal, setup_terminal};
 mod app;
+mod ui;
 use app::App;
 use std::process::Command;
 mod components;
 mod history;
 use history::{History, HistoryEntry};
-
-use anyhow::{Context, Result};
+mod screens;
+use anyhow::Result;
 use signal_hook::{consts::signal::*, iterator::Signals};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut terminal = setup_terminal().context("setup failed")?;
-    let Ok(mut app) = App::new() else {
-        restore_terminal(&mut terminal).context("restore terminal failed")?;
-        return Ok(());
-    };
-    let selected = app.run(&mut terminal).await;
-
-    restore_terminal(&mut terminal).context("restore terminal failed")?;
+    let mut app = App::new()?;
+    let selected = app.run().await;
+    drop(app);
     match selected {
         Err(e) => match e.downcast_ref() {
             Some(app::RuntimeError::UserExit) => {}
@@ -45,13 +39,13 @@ fn connect(instance: InstanceInfo) -> Result<()> {
             "ssm",
             "start-session",
             "--target",
-            &instance.get_instance_id(),
+            instance.get_instance_id(),
         ])
         .spawn()?;
 
     // Catch SIGINT, SIGSTP signal and do nothing
     // So that actually ctrl+c / ctrl+z works on the aws ssm session instead of killing / stopping us
-    let mut _signals = Signals::new([SIGINT,SIGTSTP])?;
+    let mut _signals = Signals::new([SIGINT, SIGTSTP])?;
 
     child.wait()?;
     Ok(())

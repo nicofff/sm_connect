@@ -1,45 +1,48 @@
-pub mod config_panel;
-pub mod instance_details;
-pub mod instance_selection;
+pub mod config_list;
+pub mod header_tabs;
 pub mod instance_table;
 pub mod region_list;
 pub mod text_input;
-use config_panel::config_list::ConfigOption;
-use crossterm::event::{Event, KeyCode};
 use anyhow::Result;
-use ratatui::{layout::Rect, widgets::Widget, Frame};
+use config_list::ConfigOption;
+use crossterm::event::Event;
+use ratatui::{
+    Frame,
+    layout::Rect,
+    style::{Color, Style},
+    text::{Line, Span},
+    widgets::Cell,
+};
 
 use crate::aws::InstanceInfo;
 
 pub enum Action {
-    Noop,
     Exit,
     Return(String),
-    ReturnWithKey(KeyCode),
+    ReturnRegion(String),
+    ReturnWithKeyUp,
+    ReturnWithKeyDown,
     ReturnInstance(InstanceInfo),
     ReturnConfig(ConfigOption),
     OpenConfig,
     PartialReturn(String),
     Search,
-    ToggleInfoPanel,
-    Select(InstanceInfo),
-    Hide(String),
-    Reset,
-    ToggleFavorite(String),
 }
 
-pub trait HandleAction {
-    fn handle_action(&mut self, action: Event) -> Result<Action>;
+pub trait Component<Message> {
+    fn update(&mut self, msg: Option<Message>) -> Result<Option<Action>>;
+    fn view(&mut self, frame: &mut Frame, area: Rect);
+    fn handle_event(&self, event: Event) -> Option<Message>;
 }
 
-trait View {
-    fn get_widget(&self) -> impl Widget;
-}
-
-pub trait Render {
-    fn render(&mut self, frame: &mut Frame, area: Rect);
-}
-
-pub trait RenderHelp {
-    fn render_help(&mut self, frame: &mut Frame, area: Rect);
+fn get_help_styled(c: char, message: &str) -> Cell {
+    let line = Line::from(vec![
+        Span::styled(
+            format!(" {} ", c.to_string().to_ascii_uppercase()),
+            Style::default().bg(Color::Gray).fg(Color::Black),
+        ),
+        Span::raw(" "),
+        Span::styled(message, Style::default()),
+    ]);
+    Cell::from(line)
 }
