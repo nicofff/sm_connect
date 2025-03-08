@@ -17,7 +17,7 @@ use ratatui::{
     layout::{Constraint, Layout},
     prelude::CrosstermBackend,
     style::{Color, Stylize},
-    text::{Line, Text},
+    text::Text,
     widgets::{Block, Borders, Clear, Paragraph},
 };
 

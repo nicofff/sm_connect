@@ -7,13 +7,11 @@ use super::get_help_styled;
 use super::{Action, Component};
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
-use ratatui::text::Line;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::Span,
-    widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
+    widgets::{Block, Borders, List, ListItem, ListState, Row, Table},
 };
 
 #[derive(Default, Debug, Clone)]
