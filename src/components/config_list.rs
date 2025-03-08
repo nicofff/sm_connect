@@ -93,9 +93,7 @@ impl ConfigList {
     }
 
     fn get_help(&self) -> Table {
-        let rows = vec![Row::new(vec![
-            get_help_styled('q', "Exit"),
-        ])];
+        let rows = vec![Row::new(vec![get_help_styled('q', "Exit")])];
         Table::new(rows, vec![Constraint::Min(10)])
     }
 }

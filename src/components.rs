@@ -6,7 +6,13 @@ pub mod text_input;
 use anyhow::Result;
 use config_list::ConfigOption;
 use crossterm::event::Event;
-use ratatui::{layout::Rect, style::{Color, Style}, text::{Line, Span}, widgets::Cell, Frame};
+use ratatui::{
+    Frame,
+    layout::Rect,
+    style::{Color, Style},
+    text::{Line, Span},
+    widgets::Cell,
+};
 
 use crate::aws::InstanceInfo;
 
@@ -31,7 +37,10 @@ pub trait Component<Message> {
 
 fn get_help_styled(c: char, message: &str) -> Cell {
     let line = Line::from(vec![
-        Span::styled(format!(" {} ",c.to_string().to_ascii_uppercase()), Style::default().bg(Color::Gray).fg(Color::Black)),
+        Span::styled(
+            format!(" {} ", c.to_string().to_ascii_uppercase()),
+            Style::default().bg(Color::Gray).fg(Color::Black),
+        ),
         Span::raw(" "),
         Span::styled(message, Style::default()),
     ]);

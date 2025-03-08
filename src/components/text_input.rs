@@ -141,18 +141,10 @@ impl Component<TextInputMessage> for TextInput {
                 self.move_cursor_left();
                 Ok(None)
             }
-            TextInputMessage::Esc => {
-                Ok(Some(Action::Exit))
-            }
-            TextInputMessage::Up => {
-                Ok(Some(Action::ReturnWithKeyUp))
-            }
-            TextInputMessage::Down => {
-                Ok(Some(Action::ReturnWithKeyDown))
-            }
-            TextInputMessage::Enter => {
-                Ok(Some(Action::Return(self.get_value())))
-            }
+            TextInputMessage::Esc => Ok(Some(Action::Exit)),
+            TextInputMessage::Up => Ok(Some(Action::ReturnWithKeyUp)),
+            TextInputMessage::Down => Ok(Some(Action::ReturnWithKeyDown)),
+            TextInputMessage::Enter => Ok(Some(Action::Return(self.get_value()))),
         }
     }
 

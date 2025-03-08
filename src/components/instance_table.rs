@@ -8,7 +8,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table, TableState},
 };
 
-use super::{get_help_styled, Action, Component};
+use super::{Action, Component, get_help_styled};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -152,7 +152,14 @@ impl InstanceTable {
         let rows = vec![Row::new(vec![
             get_help_styled('q', "Exit"),
             get_help_styled('/', "Search"),
-            get_help_styled('r', if self.recent_first { "Ignore recent" } else { "Recent First" }),
+            get_help_styled(
+                'r',
+                if self.recent_first {
+                    "Ignore recent"
+                } else {
+                    "Recent First"
+                },
+            ),
         ])];
         let table = Table::new(
             rows,

@@ -13,7 +13,12 @@ use crate::{
     history::History,
 };
 use ratatui::{
-    layout::{Constraint, Layout}, prelude::CrosstermBackend, style::{Color, Stylize}, text::{Line, Text}, widgets::{Block, Borders, Clear, Paragraph}, Terminal
+    Terminal,
+    layout::{Constraint, Layout},
+    prelude::CrosstermBackend,
+    style::{Color, Stylize},
+    text::{Line, Text},
+    widgets::{Block, Borders, Clear, Paragraph},
 };
 
 use anyhow::Result;

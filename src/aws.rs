@@ -36,7 +36,6 @@ impl From<(Instance, Region)> for InstanceInfo {
 }
 
 impl InstanceInfo {
-
     fn get_tags_map(instance: &Instance) -> HashMap<String, String> {
         let Some(ref tags) = instance.tags else {
             return HashMap::new();
@@ -50,7 +49,6 @@ impl InstanceInfo {
             })
             .collect()
     }
-
 
     pub fn get_region(&self) -> Region {
         self.region.clone()
@@ -104,7 +102,7 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
             let last_accessed = recents
                 .get(&instance.instance_id.clone().unwrap_or_default())
                 .map(|entry| entry.get_when());
-            let mut instance_info: InstanceInfo = (instance,region.clone()).into();
+            let mut instance_info: InstanceInfo = (instance, region.clone()).into();
             instance_info.last_access = last_accessed;
             instance_info
         })

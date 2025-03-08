@@ -16,7 +16,6 @@ use ratatui::{
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
 };
 
-
 #[derive(Default, Debug, Clone)]
 pub struct RegionList {
     state: ListState,
