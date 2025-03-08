@@ -39,7 +39,7 @@ fn connect(instance: InstanceInfo) -> Result<()> {
             "ssm",
             "start-session",
             "--target",
-            &instance.get_instance_id(),
+            instance.get_instance_id(),
         ])
         .spawn()?;
 

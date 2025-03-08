@@ -70,7 +70,7 @@ impl InstanceTable {
                     (Some(a_time), Some(b_time)) => return b_time.cmp(&a_time),
                 }
             }
-            a.get_name().cmp(&b.get_name())
+            a.get_name().cmp(b.get_name())
         });
     }
 

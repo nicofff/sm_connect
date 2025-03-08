@@ -19,14 +19,14 @@ pub struct InstanceInfo {
     last_access: Option<u64>,
 }
 
-impl Into<InstanceInfo> for (Instance, Region) {
-    fn into(self) -> InstanceInfo {
-        let (instance, region) = self;
+impl From<(Instance, Region)> for InstanceInfo {
+    fn from(val: (Instance, Region)) -> Self {
+        let (instance, region) = val;
         let tags = InstanceInfo::get_tags_map(&instance);
         let name = tags.get("Name").unwrap_or(&"".to_string()).to_string();
         InstanceInfo {
-            region: region,
-            name: name,
+            region,
+            name,
             instance_id: instance.instance_id.unwrap_or_default(),
             public_ip: instance.public_ip_address.unwrap_or_default(),
             private_ip: instance.private_ip_address.unwrap_or_default(),
