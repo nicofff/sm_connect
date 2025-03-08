@@ -8,7 +8,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table, TableState},
 };
 
-use super::{Action, Component};
+use super::{get_help_styled, Action, Component};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -138,6 +138,7 @@ impl InstanceTable {
             .row_highlight_style(
                 Style::default()
                     .bg(Color::LightGreen)
+                    .fg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol(">> ")
@@ -149,21 +150,13 @@ impl InstanceTable {
 
     fn get_help(&self) -> Table {
         let rows = vec![Row::new(vec![
-            Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
-            Cell::from(Span::styled(
-                "'i' Info Panel",
-                Style::default().fg(Color::White),
-            )),
-            Cell::from(Span::styled(
-                "'r' Show Recent First",
-                Style::default().fg(Color::White),
-            )),
+            get_help_styled('q', "Exit"),
+            get_help_styled('/', "Search"),
+            get_help_styled('r', if self.recent_first { "Ignore recent" } else { "Recent First" }),
         ])];
         let table = Table::new(
             rows,
             vec![
-                Constraint::Min(10),
-                Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
@@ -213,7 +206,7 @@ impl Component<InstanceTableMessage> for InstanceTable {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .constraints(vec![Constraint::Fill(1), Constraint::Max(1)])
             .split(area);
 
         let widget = self.get_table();

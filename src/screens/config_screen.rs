@@ -13,12 +13,7 @@ use crate::{
     history::History,
 };
 use ratatui::{
-    Terminal,
-    layout::{Constraint, Layout},
-    prelude::CrosstermBackend,
-    style::{Color, Stylize},
-    text::Line,
-    widgets::Clear,
+    layout::{Constraint, Layout}, prelude::CrosstermBackend, style::{Color, Stylize}, text::{Line, Text}, widgets::{Block, Borders, Clear, Paragraph}, Terminal
 };
 
 use anyhow::Result;
@@ -62,7 +57,7 @@ impl ConfigScreen {
             self.config_list.view(frame, layout[0]);
             let overlay_layout = Layout::default()
                 .direction(ratatui::layout::Direction::Vertical)
-                .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+                .constraints(vec![Constraint::Fill(1), Constraint::Max(3)])
                 .split(layout[0]);
             if self.input_active {
                 frame.render_widget(Clear, overlay_layout[1]);
@@ -71,14 +66,18 @@ impl ConfigScreen {
 
             match self.last_operation_success {
                 Some(true) => {
-                    let line = Line::from("Operation successful")
+                    let line = Paragraph::new(Text::from("Operation successful"))
                         .centered()
-                        .bg(Color::Green);
+                        .bg(Color::Green)
+                        .block(Block::default().borders(Borders::ALL));
                     frame.render_widget(Clear, overlay_layout[1]);
                     frame.render_widget(line, overlay_layout[1]);
                 }
                 Some(false) => {
-                    let line = Line::from("Operation failed").centered().bg(Color::Red);
+                    let line = Paragraph::new(Text::from("Operation successful"))
+                        .centered()
+                        .bg(Color::Red)
+                        .block(Block::default().borders(Borders::ALL));
                     frame.render_widget(Clear, overlay_layout[1]);
                     frame.render_widget(line, overlay_layout[1]);
                 }

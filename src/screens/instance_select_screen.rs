@@ -66,7 +66,7 @@ impl InstanceSelectScreen {
             if self.search_active {
                 let search_layout = Layout::default()
                     .direction(ratatui::layout::Direction::Vertical)
-                    .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+                    .constraints(vec![Constraint::Fill(1), Constraint::Max(3)])
                     .split(layout[1]);
                 frame.render_widget(Clear, search_layout[1]); //this clears out the background
                 //TODO: Since we are drawing on top, maybe give it some distinct style?

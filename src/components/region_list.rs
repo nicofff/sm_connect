@@ -3,9 +3,11 @@ use std::sync::Mutex;
 
 use crate::app::config::Config;
 
+use super::get_help_styled;
 use super::{Action, Component};
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
+use ratatui::text::Line;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -13,6 +15,8 @@ use ratatui::{
     text::Span,
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
 };
+
+
 #[derive(Default, Debug, Clone)]
 pub struct RegionList {
     state: ListState,
@@ -137,7 +141,7 @@ impl RegionList {
                 } else {
                     ""
                 };
-                ListItem::new(format!("{} {}", prefix, i))
+                ListItem::new(format!("{} {}", prefix, i)).style(Style::default())
             })
             .collect();
 
@@ -147,6 +151,7 @@ impl RegionList {
             .highlight_style(
                 Style::default()
                     .bg(Color::LightGreen)
+                    .fg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol(">> ")
@@ -155,28 +160,18 @@ impl RegionList {
     fn get_help(&self) -> Table {
         let rows = vec![
             Row::new(vec![
-                Cell::from(Span::styled("'q' Exit", Style::default().fg(Color::White))),
-                Cell::from(Span::styled("'h' Hide", Style::default().fg(Color::White))),
-                Cell::from(Span::styled(
-                    "'r' Reset regions",
-                    Style::default().fg(Color::White),
-                )),
+                get_help_styled('q', "Exit"),
+                get_help_styled('h', "Hide"),
+                get_help_styled('r', "Reset regions"),
             ]),
             Row::new(vec![
-                Cell::from(Span::styled(
-                    "'*' Toggle Favorite",
-                    Style::default().fg(Color::White),
-                )),
-                Cell::from(Span::styled(
-                    "'c' to open configuration",
-                    Style::default().fg(Color::White),
-                )),
+                get_help_styled('*', "Toggle Favorite"),
+                get_help_styled('c', "Open Configuration"),
             ]),
         ];
         Table::new(
             rows,
             vec![
-                Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
@@ -251,7 +246,7 @@ impl Component<RegionListEvent> for RegionList {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .constraints(vec![Constraint::Fill(1), Constraint::Max(2)])
             .split(area);
 
         let list = self.get_list();

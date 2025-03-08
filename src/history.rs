@@ -89,8 +89,12 @@ impl History {
     }
 
     pub fn reset() -> Result<()> {
-        let entries = HashMap::new();
-        Self::write(&entries)?;
+        let file = Self::get_history_path()?;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(file)?;
+        file.flush()?;
         Ok(())
     }
 

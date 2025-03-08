@@ -8,6 +8,8 @@ use ratatui::{
     text::Span,
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Row, Table},
 };
+
+use super::get_help_styled;
 #[derive(Debug, Clone, Copy)]
 pub enum ConfigOption {
     ResetRecent,
@@ -91,10 +93,9 @@ impl ConfigList {
     }
 
     fn get_help(&self) -> Table {
-        let rows = vec![Row::new(vec![Cell::from(Span::styled(
-            "'q' Exit",
-            Style::default().fg(Color::White),
-        ))])];
+        let rows = vec![Row::new(vec![
+            get_help_styled('q', "Exit"),
+        ])];
         Table::new(rows, vec![Constraint::Min(10)])
     }
 }
@@ -129,7 +130,7 @@ impl Component<ConfigListMessage> for ConfigList {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(90), Constraint::Percentage(10)])
+            .constraints(vec![Constraint::Fill(1), Constraint::Max(1)])
             .split(area);
 
         let list = self.get_list();

@@ -1,6 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;
-use ratatui::widgets::Paragraph;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Paragraph};
 use ratatui::{Frame, text::Text};
 
 use crate::components::Action;
@@ -156,7 +157,10 @@ impl Component<TextInputMessage> for TextInput {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let widget = self.get_widget();
+        let block = Block::bordered()
+            .border_type(BorderType::Rounded)
+            .style(Style::default().bg(Color::Blue));
+        let widget = self.get_widget().block(block);
         frame.render_widget(widget, area);
     }
 
