@@ -113,10 +113,10 @@ impl InstanceTable {
             .cloned()
             .map(|i| {
                 Row::new(vec![
-                    Cell::from(i.get_name()),
-                    Cell::from(i.get_instance_id()),
-                    Cell::from(i.get_private_ip()),
-                    Cell::from(i.get_public_ip()),
+                    Cell::from(i.get_name().to_string()),
+                    Cell::from(i.get_instance_id().to_string()),
+                    Cell::from(i.get_private_ip().to_string()),
+                    Cell::from(i.get_public_ip().to_string()),
                 ])
                 .style(if self.recent_first && i.get_last_access().is_some() {
                     Style::default().fg(Color::Yellow)

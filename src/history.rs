@@ -24,9 +24,9 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    pub fn new(instance_id: String) -> HistoryEntry {
+    pub fn new(instance_id: impl Into<String>) -> HistoryEntry {
         HistoryEntry {
-            instance_id,
+            instance_id: instance_id.into(),
             when: get_current_time(),
         }
     }
