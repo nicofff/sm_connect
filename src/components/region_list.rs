@@ -29,12 +29,14 @@ impl RegionList {
         let unlocked = config.lock().unwrap();
         let items = unlocked.get_visible_regions();
         let favorites = unlocked.get_favorite_regions();
-        RegionList {
+        let mut rl = RegionList {
             state,
             items,
             favorites,
             config: config.clone(),
-        }
+        };
+        rl.sort_list();
+        rl
     }
 
     fn update_items(&mut self, items: Vec<String>) {
