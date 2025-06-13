@@ -117,6 +117,7 @@ pub enum TextInputMessage {
     Up,
     Down,
     Enter,
+    Slash,
 }
 
 impl Component<TextInputMessage> for TextInput {
@@ -145,6 +146,7 @@ impl Component<TextInputMessage> for TextInput {
             TextInputMessage::Up => Ok(Some(Action::ReturnWithKeyUp)),
             TextInputMessage::Down => Ok(Some(Action::ReturnWithKeyDown)),
             TextInputMessage::Enter => Ok(Some(Action::Return(self.get_value()))),
+            TextInputMessage::Slash => Ok(Some(Action::Exit)),
         }
     }
 
@@ -159,7 +161,13 @@ impl Component<TextInputMessage> for TextInput {
     fn handle_event(&self, event: Event) -> Option<TextInputMessage> {
         match event {
             Event::Key(key) => match key.code {
-                KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
+                KeyCode::Char(c) => {
+                    if c == '/' {
+                        Some(TextInputMessage::Slash)
+                    } else {
+                        Some(TextInputMessage::Char(c))
+                    }
+                }
                 KeyCode::Backspace => Some(TextInputMessage::Backspace),
                 KeyCode::Right => Some(TextInputMessage::Right),
                 KeyCode::Left => Some(TextInputMessage::Left),
