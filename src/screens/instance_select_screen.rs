@@ -37,7 +37,7 @@ pub enum Outcome {
 impl InstanceSelectScreen {
     pub fn new() -> InstanceSelectScreen {
         let instance_table_component = InstanceTable::new();
-        let search_component = TextInput::default();
+        let search_component = TextInput::new("Search (Enter=Select, /=Exit): ".to_string());
         let mut header_tabs_component = HeaderTabs::new();
         header_tabs_component.set_selected(Tab::Instances);
         Self {
@@ -97,6 +97,25 @@ impl Screen<Outcome> for InstanceSelectScreen {
                     _ => {}
                 }
             } else {
+                // Handle direct key events when in search mode
+                if let crossterm::event::Event::Key(key_event) = event {
+                    match key_event.code {
+                        crossterm::event::KeyCode::Char('/') => {
+                            // Toggle search mode off when '/' is pressed in search
+                            self.search_active = false;
+                            continue;
+                        }
+                        crossterm::event::KeyCode::Enter => {
+                            // Select current instance when Enter is pressed in search
+                            if let Some(instance) = self.instance_table_component.current() {
+                                return Ok(Outcome::InstanceSelected(instance));
+                            }
+                            continue;
+                        }
+                        _ => {}
+                    }
+                }
+
                 let message = self.search_component.handle_event(event);
                 let action = self.search_component.update(message)?;
                 match action {
