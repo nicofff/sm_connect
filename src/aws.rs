@@ -36,6 +36,17 @@ impl From<(Instance, Region)> for InstanceInfo {
 }
 
 impl InstanceInfo {
+    pub fn new(region: Region, instance_id: String) -> Self {
+        InstanceInfo {
+            region,
+            name: String::new(),
+            instance_id,
+            public_ip: String::new(),
+            private_ip: String::new(),
+            last_access: None,
+        }
+    }
+
     fn get_tags_map(instance: &Instance) -> HashMap<String, String> {
         let Some(ref tags) = instance.tags else {
             return HashMap::new();

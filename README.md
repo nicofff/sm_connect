@@ -35,6 +35,8 @@ This is caused by MacOS blocking unsigned binary, you can create an exception by
 
 # Usage
 
+## Interactive Mode
+
 ```sh
 export AWS_PROFILE=my-profile
 aws sso login
@@ -45,6 +47,29 @@ sm_connect
 1. Select the __region__ that contains your instance.
 2. Select the __instance__ you want to connect to.
 4. __Connect__ and enjoy!
+
+## Command-line Arguments
+
+You can also connect directly to an instance by providing the region and instance ID as command-line arguments:
+
+```sh
+export AWS_PROFILE=my-profile
+aws sso login
+sm_connect --region us-east-1 --instance i-ad53d5e3831ea
+```
+
+Or using the short form:
+
+```sh
+sm_connect -r us-east-1 -i i-ad53d5e3831ea
+```
+
+### Available Options
+
+- `-r, --region <REGION>`: AWS region (e.g., us-east-1, us-west-2)
+- `-i, --instance <INSTANCE>`: AWS EC2 instance ID (e.g., i-ad53d5e3831ea)
+- `-h, --help`: Print help information
+- `-V, --version`: Print version information
 
 [aws-cli-install]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 [aws-sm-install]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
