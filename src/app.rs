@@ -105,17 +105,15 @@ impl App {
                     
                     // Check for any input events (like ESC to cancel)
                     if let Ok(true) = event::poll(Duration::from_millis(LOADING_POLL_DURATION_MS)) {
-                        if let Ok(event) = event::read() {
-                            if let event::Event::Key(key) = event {
-                                if key.code == event::KeyCode::Esc {
-                                    // Cancel the loading task if it's running
-                                    if let Some(task) = self.loading_task.take() {
-                                        task.abort();
-                                    }
-                                    self.selected_screen = SelectedScreen::RegionSelect;
-                                    self.loading_screen = None;
-                                    continue;
+                        if let Ok(event::Event::Key(key)) = event::read() {
+                            if key.code == event::KeyCode::Esc {
+                                // Cancel the loading task if it's running
+                                if let Some(task) = self.loading_task.take() {
+                                    task.abort();
                                 }
+                                self.selected_screen = SelectedScreen::RegionSelect;
+                                self.loading_screen = None;
+                                continue;
                             }
                         }
                     } else {
