@@ -6,16 +6,19 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
+const SPINNER_CHARS: [char; 4] = ['|', '/', '-', '\\'];
+const SPINNER_FRAME_DURATION_MS: u128 = 200;
+
 pub struct LoadingScreen {
     start_time: Instant,
     message: String,
 }
 
 impl LoadingScreen {
-    pub fn new(message: String) -> Self {
+    pub fn new<T: Into<String>>(message: T) -> Self {
         Self {
             start_time: Instant::now(),
-            message,
+            message: message.into(),
         }
     }
 
@@ -41,9 +44,8 @@ impl LoadingScreen {
 
         // Get elapsed time and create spinning indicator
         let elapsed = self.start_time.elapsed();
-        let spinner_chars = ['|', '/', '-', '\\'];
-        let spinner_index = (elapsed.as_millis() / 200) as usize % spinner_chars.len();
-        let spinner = spinner_chars[spinner_index];
+        let spinner_index = (elapsed.as_millis() / SPINNER_FRAME_DURATION_MS) as usize % SPINNER_CHARS.len();
+        let spinner = SPINNER_CHARS[spinner_index];
 
         // Create the loading message with spinner
         let loading_text = format!("{} {}", spinner, self.message);
@@ -61,7 +63,7 @@ impl LoadingScreen {
 
         frame.render_widget(loading_paragraph, horizontal[1]);
 
-        // Add elapsed time indicator and help text
+        // Add elapsed time indicator and help text  
         let elapsed_secs = elapsed.as_secs();
         let time_text = if elapsed_secs > 0 {
             format!("Elapsed: {}s", elapsed_secs)

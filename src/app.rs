@@ -14,6 +14,8 @@ use ratatui::prelude::*;
 use tokio::time::Duration;
 use crossterm::event;
 
+const LOADING_POLL_DURATION_MS: u64 = 50;
+
 use std::io::Stdout;
 
 use anyhow::Result;
@@ -102,7 +104,7 @@ impl App {
                     }
                     
                     // Check for any input events (like ESC to cancel)
-                    if let Ok(true) = event::poll(Duration::from_millis(50)) {
+                    if let Ok(true) = event::poll(Duration::from_millis(LOADING_POLL_DURATION_MS)) {
                         if let Ok(event) = event::read() {
                             if let event::Event::Key(key) = event {
                                 if key.code == event::KeyCode::Esc {
@@ -119,21 +121,22 @@ impl App {
                     } else {
                         // No input event, just continue to check if loading is done
                         // This sleep ensures we redraw the spinner regularly
-                        tokio::time::sleep(Duration::from_millis(50)).await;
+                        tokio::time::sleep(Duration::from_millis(LOADING_POLL_DURATION_MS)).await;
                     }
                     
                     // Check if the loading task is complete
                     if let Some(task) = &mut self.loading_task {
                         if task.is_finished() {
-                            let task = self.loading_task.take().unwrap();
-                            match task.await.unwrap() {
-                                Ok(instances) => {
-                                    self.instance_selection_screen.set_instances(instances);
-                                    self.selected_screen = SelectedScreen::InstanceSelect;
-                                    self.loading_screen = None;
-                                }
-                                Err(_e) => {
-                                    return Err(RuntimeError::FetchInstanceError.into());
+                            if let Some(task) = self.loading_task.take() {
+                                match task.await {
+                                    Ok(Ok(instances)) => {
+                                        self.instance_selection_screen.set_instances(instances);
+                                        self.selected_screen = SelectedScreen::InstanceSelect;
+                                        self.loading_screen = None;
+                                    }
+                                    Ok(Err(_)) | Err(_) => {
+                                        return Err(RuntimeError::FetchInstanceError.into());
+                                    }
                                 }
                             }
                         }
