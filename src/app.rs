@@ -5,11 +5,14 @@ use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
 use crate::screens::region_select_screen;
 use crate::screens::region_select_screen::RegionSelectScreen;
+use crate::components::loading_screen::LoadingScreen;
 use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
 use anyhow::Context;
 use ratatui::prelude::*;
+use tokio::time::Duration;
+use crossterm::event;
 
 use std::io::Stdout;
 
@@ -21,6 +24,7 @@ pub mod config;
 #[derive(Debug, Clone)]
 pub enum SelectedScreen {
     RegionSelect,
+    LoadingInstances,
     InstanceSelect,
     Config,
 }
@@ -39,6 +43,8 @@ pub struct App {
     region_select_screen: RegionSelectScreen,
     instance_selection_screen: InstanceSelectScreen,
     config_screen: ConfigScreen,
+    loading_screen: Option<LoadingScreen>,
+    loading_task: Option<tokio::task::JoinHandle<Result<Vec<crate::aws::InstanceInfo>>>>,
 }
 
 impl App {
@@ -54,6 +60,8 @@ impl App {
             region_select_screen,
             instance_selection_screen,
             config_screen,
+            loading_screen: None,
+            loading_task: None,
         })
     }
 
@@ -69,16 +77,65 @@ impl App {
                             should_exit = true;
                         }
                         region_select_screen::Outcome::RegionSelected(region) => {
-                            self.selected_screen = SelectedScreen::InstanceSelect;
-                            match self.instance_selection_screen.with_region(region).await {
-                                Ok(_) => {}
+                            self.selected_screen = SelectedScreen::LoadingInstances;
+                            self.loading_screen = Some(LoadingScreen::new(
+                                format!("Loading instances for region: {}", region)
+                            ));
+                            
+                            // Start the async loading task
+                            let region_clone = region.clone();
+                            self.loading_task = Some(tokio::spawn(async move {
+                                crate::aws::fetch_instances(aws_config::Region::new(region_clone)).await
+                            }));
+                        }
+                        region_select_screen::Outcome::OpenConfig => {
+                            self.selected_screen = SelectedScreen::Config;
+                        }
+                    }
+                }
+                SelectedScreen::LoadingInstances => {
+                    // Draw the loading screen (this will show the animated spinner)
+                    if let Some(ref loading_screen) = self.loading_screen {
+                        self.terminal.draw(|frame| {
+                            loading_screen.draw(frame, frame.area());
+                        })?;
+                    }
+                    
+                    // Check for any input events (like ESC to cancel)
+                    if let Ok(true) = event::poll(Duration::from_millis(50)) {
+                        if let Ok(event) = event::read() {
+                            if let event::Event::Key(key) = event {
+                                if key.code == event::KeyCode::Esc {
+                                    // Cancel the loading task if it's running
+                                    if let Some(task) = self.loading_task.take() {
+                                        task.abort();
+                                    }
+                                    self.selected_screen = SelectedScreen::RegionSelect;
+                                    self.loading_screen = None;
+                                    continue;
+                                }
+                            }
+                        }
+                    } else {
+                        // No input event, just continue to check if loading is done
+                        // This sleep ensures we redraw the spinner regularly
+                        tokio::time::sleep(Duration::from_millis(50)).await;
+                    }
+                    
+                    // Check if the loading task is complete
+                    if let Some(task) = &mut self.loading_task {
+                        if task.is_finished() {
+                            let task = self.loading_task.take().unwrap();
+                            match task.await.unwrap() {
+                                Ok(instances) => {
+                                    self.instance_selection_screen.set_instances(instances);
+                                    self.selected_screen = SelectedScreen::InstanceSelect;
+                                    self.loading_screen = None;
+                                }
                                 Err(_e) => {
                                     return Err(RuntimeError::FetchInstanceError.into());
                                 }
                             }
-                        }
-                        region_select_screen::Outcome::OpenConfig => {
-                            self.selected_screen = SelectedScreen::Config;
                         }
                     }
                 }
