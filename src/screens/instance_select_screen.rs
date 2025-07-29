@@ -1,6 +1,5 @@
 use std::io::Stdout;
 
-use aws_config::Region;
 use crossterm::event;
 use ratatui::{
     Terminal,
@@ -10,7 +9,7 @@ use ratatui::{
 };
 
 use crate::{
-    aws::{InstanceInfo, fetch_instances},
+    aws::InstanceInfo,
     components::{
         Action, Component,
         header_tabs::{HeaderTabs, Tab},
@@ -48,10 +47,9 @@ impl InstanceSelectScreen {
         }
     }
 
-    pub async fn with_region(&mut self, region: String) -> Result<()> {
-        let instances = fetch_instances(Region::new(region)).await?;
+
+    pub fn set_instances(&mut self, instances: Vec<InstanceInfo>) {
         self.instance_table_component.set_instances(instances);
-        Ok(())
     }
 
     fn draw(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
