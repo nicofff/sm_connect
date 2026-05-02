@@ -1,63 +1,17 @@
+name: Publish to crates.io
 on:
   push:
-    tags:
-      - '**'
-
-permissions:
-  contents: write
-
+    tags: ['v*']  # Triggers when pushing tags starting with 'v'
 jobs:
-  build:
-    name: Build - ${{ matrix.platform.os_name }}
-    strategy:
-      matrix:
-        platform:
-          - os_name: Linux-x86_64
-            os: ubuntu-latest
-
-          - os_name: macOS-arm64
-            os: macos-latest
-
-          - os_name: MacOS-x86_64
-            os: macos-13
-
-
-    runs-on: ${{ matrix.platform.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install toolchain if not cross-compiling
-        uses: dtolnay/rust-toolchain@stable
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-      - name: Build binary
-        shell: bash
-        run: |
-          cargo build --locked --release
-      - name: Rename binary
-        run: mv target/release/sm_connect target/release/sm_connect-${{ matrix.platform.os_name }}
-      
-      - name: Publish release artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sm_connect-${{ matrix.platform.os_name }}
-          path: target/release/sm_connect-${{ matrix.platform.os_name }}
-
-
-  release:
-    name: Release
-    needs: build
+  publish:
     runs-on: ubuntu-latest
+    environment: crates-io  # Optional: for enhanced security
+    permissions:
+      id-token: write     # Required for OIDC token exchange
     steps:
-      - name: Download release artifacts
-        uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          pattern: sm_connect-*
-          path: release_files/
-      - run: ls -l release_files/
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release_files/sm_connect-*
-
+    - uses: actions/checkout@v6
+    - uses: rust-lang/crates-io-auth-action@v1
+      id: auth
+    - run: cargo publish
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}

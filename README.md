@@ -16,16 +16,11 @@ Bonus points for not needing SSH anymore.
 
 # Install
 
-1. Grab the last [release](https://github.com/nicofff/sm_connect/releases)
-2. Optional: Rename it / move it to a folder in your $PATH
-3. Make it executable: chmod +x sm_connect
-4. (Mac only) First time you run it you might get something that looks like:
 ```sh
-$ ./sm_connect-macOS-arm64
-[1]    40745 killed     ./sm_connect-macOS-arm64
+cargo install sm_connect
 ```
-This is caused by MacOS blocking unsigned binary, you can create an exception by going to Settings -> Privacy and Security and hit "Allow Anyways"
-![Screenshot showing the setting in the MacOS Settings](docs/macos_security_settings.png?raw=true "Title")
+
+If you don't have Rust installed, get it from [rustup.rs](https://rustup.rs).
 
 # Prerequisites
 
