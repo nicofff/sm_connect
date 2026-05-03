@@ -143,6 +143,7 @@ impl SftpClient {
         fs::create_dir_all(local).await?;
         let entries = self.list_directory(remote).await?;
         for entry in entries {
+            if entry.name == ".." { continue; }
             let local_path = local.join(&entry.name);
             if entry.is_dir {
                 Box::pin(self.download_directory(&entry.path, &local_path)).await?;
