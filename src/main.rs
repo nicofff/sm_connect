@@ -1,5 +1,6 @@
 mod aws;
 use aws::InstanceInfo;
+mod sftp;
 mod app;
 mod ui;
 use app::{App, UserAction};
