@@ -40,7 +40,7 @@ impl UsernamePromptScreen {
                 .direction(Direction::Vertical)
                 .constraints([
                     Constraint::Fill(1),
-                    Constraint::Length(5),
+                    Constraint::Length(7),
                     Constraint::Fill(1),
                 ])
                 .split(area);
