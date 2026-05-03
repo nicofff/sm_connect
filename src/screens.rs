@@ -1,4 +1,5 @@
 pub mod config_screen;
+pub mod file_manager_screen;
 pub mod connecting_screen;
 pub mod instance_select_screen;
 pub mod loading_instances_screen;
