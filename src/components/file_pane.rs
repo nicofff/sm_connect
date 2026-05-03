@@ -26,8 +26,7 @@ pub enum FilePaneMessage {
 }
 
 pub enum FilePaneOutputAction {
-    Enter(FileInfo),
-    Select(usize),
+    Select,
     Exit,
 }
 
@@ -166,7 +165,7 @@ impl Component for FilePane {
             FilePaneMessage::Select => {
                 if let Some(i) = self.current_index() {
                     self.toggle_selected(i);
-                    Ok(Some(FilePaneOutputAction::Select(i)))
+                    Ok(Some(FilePaneOutputAction::Select))
                 } else {
                     Ok(None)
                 }
