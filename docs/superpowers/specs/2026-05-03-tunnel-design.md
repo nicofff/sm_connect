@@ -48,7 +48,7 @@ When the child exits, the tunnel is closed. No remote cleanup is needed — the 
 ## Implementation notes
 
 - `connect()` and `tunnel()` in `main.rs` share the same signal-handling pattern; consider extracting a `run_aws_command(args) -> Result<()>` helper to avoid duplication.
-- Port selection: try binding a `TcpListener` on candidate ports starting at 2222; use the first that succeeds.
+- Port selection: bind a `TcpListener` on `127.0.0.1:0` and let the OS assign a free port; read it back with `local_addr().port()`. Drop the listener before handing the port to the SSM command.
 
 ## Future: ephemeral sshd path
 
