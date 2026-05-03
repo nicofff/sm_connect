@@ -3,8 +3,9 @@ use crate::aws::InstanceInfo;
 use crate::screens::Screen;
 use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
-use crate::screens::region_select_screen;
+use crate::screens::loading_instances_screen::LoadingInstancesScreen;
 use crate::screens::region_select_screen::RegionSelectScreen;
+use crate::screens::{loading_instances_screen, region_select_screen};
 use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
@@ -20,6 +21,7 @@ pub mod config;
 #[derive(Debug, Clone)]
 pub enum SelectedScreen {
     RegionSelect,
+    LoadingInstances(String),
     InstanceSelect,
     Config,
 }
@@ -44,7 +46,7 @@ impl App {
             selected_screen: SelectedScreen::RegionSelect,
             region_select_screen,
             instance_selection_screen,
-            config_screen
+            config_screen,
         })
     }
 
@@ -52,22 +54,29 @@ impl App {
         let mut should_exit = false;
         let mut return_value: Option<InstanceInfo> = None;
         loop {
-            // render
-            match self.selected_screen {
+            match self.selected_screen.clone() {
                 SelectedScreen::RegionSelect => {
                     match self.region_select_screen.run(&mut self.terminal)? {
-                        region_select_screen::Outcome::Exit => {
-                            should_exit = true;
-                        }
-                        region_select_screen::Outcome::InstancesFetched(instances) => {
-                            self.instance_selection_screen.set_instances(instances);
-                            self.selected_screen = SelectedScreen::InstanceSelect;
+                        region_select_screen::Outcome::Exit => should_exit = true,
+                        region_select_screen::Outcome::RegionSelected(region) => {
+                            self.selected_screen = SelectedScreen::LoadingInstances(region);
                         }
                         region_select_screen::Outcome::OpenConfig => {
                             self.selected_screen = SelectedScreen::Config;
                         }
                     }
-                },
+                }
+                SelectedScreen::LoadingInstances(region) => {
+                    match LoadingInstancesScreen::new(region).run(&mut self.terminal)? {
+                        loading_instances_screen::Outcome::Cancelled => {
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                        }
+                        loading_instances_screen::Outcome::InstancesFetched(instances) => {
+                            self.instance_selection_screen.set_instances(instances);
+                            self.selected_screen = SelectedScreen::InstanceSelect;
+                        }
+                    }
+                }
                 SelectedScreen::InstanceSelect => {
                     match self.instance_selection_screen.run(&mut self.terminal)? {
                         crate::screens::instance_select_screen::Outcome::Exit => {
@@ -92,10 +101,7 @@ impl App {
                 break;
             }
         }
-        match return_value {
-            Some(instance) => Ok(Some(instance)),
-            None => Ok(None),
-        }
+        Ok(return_value)
     }
 }
 
