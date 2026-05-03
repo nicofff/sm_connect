@@ -63,8 +63,27 @@ sm_connect -r us-east-1 -i i-ad53d5e3831ea
 
 - `-r, --region <REGION>`: AWS region (e.g., us-east-1, us-west-2)
 - `-i, --instance <INSTANCE>`: AWS EC2 instance ID (e.g., i-ad53d5e3831ea)
+- `-t, --tunnel`: Forward the instance's SSH port (22) over SSM to a random local port, then print the SFTP URL for use with a file manager. Requires SSH running on the instance; authentication is handled by your file manager.
 - `-h, --help`: Print help information
 - `-V, --version`: Print version information
+
+## Tunnel Mode
+
+To connect a file manager to an instance without a VPN:
+
+```sh
+sm_connect --tunnel
+```
+
+Or directly, skipping instance selection:
+
+```sh
+sm_connect -r us-east-1 -i i-ad53d5e3831ea --tunnel
+```
+
+`sm_connect` prints an SFTP URL (e.g. `sftp://localhost:52341`) that you can open in any file manager (Cyberduck, Transmit, Finder, Midnight Commander, etc.). Press Ctrl+C when done to close the tunnel.
+
+> **Prerequisites:** SSH must be running on the instance (port 22). Your file manager handles authentication using your existing SSH credentials.
 
 [aws-cli-install]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 [aws-sm-install]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
