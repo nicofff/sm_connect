@@ -1,7 +1,7 @@
 pub mod config_list;
 pub mod header_tabs;
 pub mod instance_table;
-pub mod loading_screen;
+pub mod loader;
 pub mod region_list;
 pub mod text_input;
 use anyhow::Result;
