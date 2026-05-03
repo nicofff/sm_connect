@@ -59,7 +59,8 @@ impl HeaderTabs {
 pub enum HeaderTabMessage {}
 pub enum HeaderTabOutputAction {}
 
-impl Component<HeaderTabMessage> for HeaderTabs {
+impl Component for HeaderTabs {
+    type Message = HeaderTabMessage;
     type OutputAction = HeaderTabOutputAction;
     fn update(
         &mut self,
@@ -77,7 +78,7 @@ impl Component<HeaderTabMessage> for HeaderTabs {
         frame.render_widget(tabs, area);
     }
 
-    fn handle_event(&self, _event: crossterm::event::Event) -> Option<HeaderTabMessage> {
+    fn handle_event(&self, _event: crossterm::event::Event) -> Option<Self::Message> {
         None
     }
 }

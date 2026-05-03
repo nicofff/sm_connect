@@ -186,7 +186,8 @@ pub enum InstanceTableOutputAction {
     Search,
 }
 
-impl Component<InstanceTableMessage> for InstanceTable {
+impl Component for InstanceTable {
+    type Message = InstanceTableMessage;
     type OutputAction = InstanceTableOutputAction;
     fn update(&mut self, msg: Option<InstanceTableMessage>) -> Result<Option<Self::OutputAction>> {
         let Some(msg) = msg else {
@@ -227,7 +228,7 @@ impl Component<InstanceTableMessage> for InstanceTable {
         frame.render_widget(help, vertical_layout[1]);
     }
 
-    fn handle_event(&self, event: Event) -> Option<InstanceTableMessage> {
+    fn handle_event(&self, event: Event) -> Option<Self::Message> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Some(InstanceTableMessage::Exit),

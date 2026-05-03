@@ -109,7 +109,8 @@ pub enum ConfigListOutputAction {
     ReturnConfig(ConfigOption),
 }
 
-impl Component<ConfigListMessage> for ConfigList {
+impl Component for ConfigList {
+    type Message = ConfigListMessage;
     type OutputAction = ConfigListOutputAction;
     fn update(&mut self, msg: Option<ConfigListMessage>) -> Result<Option<Self::OutputAction>> {
         match msg {
@@ -142,7 +143,7 @@ impl Component<ConfigListMessage> for ConfigList {
         frame.render_widget(help, vertical_layout[1]);
     }
 
-    fn handle_event(&self, event: Event) -> Option<ConfigListMessage> {
+    fn handle_event(&self, event: Event) -> Option<Self::Message> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => Some(ConfigListMessage::Exit),

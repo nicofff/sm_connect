@@ -196,7 +196,8 @@ pub enum RegionListOutputAction {
     Return(String),
 }
 
-impl Component<RegionListEvent> for RegionList {
+impl Component for RegionList {
+    type Message = RegionListEvent;
     type OutputAction = RegionListOutputAction;
     fn handle_event(&self, event: Event) -> Option<RegionListEvent> {
         match event {

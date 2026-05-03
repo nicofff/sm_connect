@@ -14,11 +14,12 @@ use ratatui::{
     widgets::Cell,
 };
 
-pub trait Component<Message> {
+pub trait Component {
+    type Message;
     type OutputAction;
-    fn update(&mut self, msg: Option<Message>) -> Result<Option<Self::OutputAction>>;
+    fn update(&mut self, msg: Option<Self::Message>) -> Result<Option<Self::OutputAction>>;
     fn view(&mut self, frame: &mut Frame, area: Rect);
-    fn handle_event(&self, event: Event) -> Option<Message>;
+    fn handle_event(&self, event: Event) -> Option<Self::Message>;
 }
 
 fn get_help_styled(c: char, message: &str) -> Cell {

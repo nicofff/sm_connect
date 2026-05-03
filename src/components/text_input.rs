@@ -125,7 +125,8 @@ pub enum TextInputOutputAction {
     Return(String),
 }
 
-impl Component<TextInputMessage> for TextInput {
+impl Component for TextInput {
+    type Message = TextInputMessage;
     type OutputAction = TextInputOutputAction;
     fn update(&mut self, msg: Option<TextInputMessage>) -> Result<Option<Self::OutputAction>> {
         let Some(msg) = msg else {
@@ -163,7 +164,7 @@ impl Component<TextInputMessage> for TextInput {
         frame.render_widget(widget, area);
     }
 
-    fn handle_event(&self, event: Event) -> Option<TextInputMessage> {
+    fn handle_event(&self, event: Event) -> Option<Self::Message> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char(c) => Some(TextInputMessage::Char(c)),
