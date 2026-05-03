@@ -46,7 +46,11 @@ async fn main() -> Result<()> {
     if let (Some(region_str), Some(instance_id)) = (args.region, args.instance) {
         let region = Region::new(region_str);
         let instance = InstanceInfo::new(region, instance_id);
-        connect(instance)?;
+        if args.tunnel {
+            tunnel(instance)?;
+        } else {
+            connect(instance)?;
+        }
         return Ok(());
     }
 
@@ -61,7 +65,13 @@ async fn main() -> Result<()> {
                 eprintln!("  caused by: {}", cause);
             }
         },
-        Ok(Some(instance)) => connect(instance)?,
+        Ok(Some(instance)) => {
+            if args.tunnel {
+                tunnel(instance)?;
+            } else {
+                connect(instance)?;
+            }
+        }
         Ok(None) => {}
     }
     Ok(())
@@ -77,6 +87,30 @@ fn run_aws_command(args: &[&str]) -> Result<()> {
 
     child.wait()?;
     Ok(())
+}
+
+fn tunnel(instance: InstanceInfo) -> Result<()> {
+    let local_port = pick_local_port()?;
+    let parameters = format!(
+        r#"{{"portNumber":["22"],"localPortNumber":["{}"]}}"#,
+        local_port
+    );
+    println!(
+        "SSH tunnel ready — connect your file manager to sftp://localhost:{}\nPress Ctrl+C to close the tunnel.",
+        local_port
+    );
+    run_aws_command(&[
+        "--region",
+        instance.get_region().as_ref(),
+        "ssm",
+        "start-session",
+        "--target",
+        instance.get_instance_id(),
+        "--document-name",
+        "AWS-StartPortForwardingSession",
+        "--parameters",
+        &parameters,
+    ])
 }
 
 fn connect(instance: InstanceInfo) -> Result<()> {
