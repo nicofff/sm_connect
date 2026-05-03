@@ -55,25 +55,27 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn connect(instance: InstanceInfo) -> Result<()> {
-    // Run the AWS command
-    let entry = HistoryEntry::new(instance.get_instance_id());
-    History::save(entry)?;
+fn run_aws_command(args: &[&str]) -> Result<()> {
     let mut child = Command::new("aws")
-        .args([
-            "--region",
-            instance.get_region().as_ref(),
-            "ssm",
-            "start-session",
-            "--target",
-            instance.get_instance_id(),
-        ])
+        .args(args)
         .spawn()?;
 
-    // Catch SIGINT, SIGSTP signal and do nothing
-    // So that actually ctrl+c / ctrl+z works on the aws ssm session instead of killing / stopping us
+    // Catch SIGINT, SIGTSTP so they pass through to the child (aws ssm session) instead of killing us
     let mut _signals = Signals::new([SIGINT, SIGTSTP])?;
 
     child.wait()?;
     Ok(())
+}
+
+fn connect(instance: InstanceInfo) -> Result<()> {
+    let entry = HistoryEntry::new(instance.get_instance_id());
+    History::save(entry)?;
+    run_aws_command(&[
+        "--region",
+        instance.get_region().as_ref(),
+        "ssm",
+        "start-session",
+        "--target",
+        instance.get_instance_id(),
+    ])
 }
