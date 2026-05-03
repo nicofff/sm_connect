@@ -3,6 +3,8 @@ Session Manager Connect
 
 Session Manager Connect is a TUI to simplify using AWS Systems Manager's Session Manager to connect to EC2 instances
 
+![Demo](docs/demo.gif)
+
 # Why?
 If you have a more than a few of EC2 servers, you usually do two things:
 1. Go to the AWS console, and get the ip address to connect to the server
