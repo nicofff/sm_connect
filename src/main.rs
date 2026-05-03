@@ -10,6 +10,8 @@ mod components;
 mod history;
 use history::{History, HistoryEntry};
 mod screens;
+mod file_manager_app;
+use file_manager_app::FileManagerApp;
 use anyhow::Result;
 use aws_config::Region;
 use clap::Parser;
@@ -117,9 +119,8 @@ fn tunnel(instance: InstanceInfo) -> Result<()> {
 }
 
 fn launch_file_manager(instance: InstanceInfo) -> Result<()> {
-    // TODO: implemented in a later task
-    println!("File manager launching for instance: {}", instance.get_instance_id());
-    Ok(())
+    let mut app = FileManagerApp::new()?;
+    app.run(instance)
 }
 
 fn connect(instance: InstanceInfo) -> Result<()> {
