@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table, TableState},
 };
 
-use super::{Action, Component, get_help_styled};
+use super::{Component, get_help_styled};
 use anyhow::Result;
 #[derive(Debug, Clone)]
 pub struct InstanceTable {
@@ -180,14 +180,20 @@ pub enum InstanceTableMessage {
     Search,
     RecentFirst,
 }
+pub enum InstanceTableOutputAction {
+    Exit,
+    ReturnInstance(InstanceInfo),
+    Search,
+}
 
 impl Component<InstanceTableMessage> for InstanceTable {
-    fn update(&mut self, msg: Option<InstanceTableMessage>) -> Result<Option<Action>> {
+    type OutputAction = InstanceTableOutputAction;
+    fn update(&mut self, msg: Option<InstanceTableMessage>) -> Result<Option<Self::OutputAction>> {
         let Some(msg) = msg else {
             return Ok(None);
         };
         match msg {
-            InstanceTableMessage::Exit => Ok(Some(Action::Exit)),
+            InstanceTableMessage::Exit => Ok(Some(InstanceTableOutputAction::Exit)),
             InstanceTableMessage::Up => {
                 self.previous();
                 Ok(None)
@@ -197,10 +203,10 @@ impl Component<InstanceTableMessage> for InstanceTable {
                 Ok(None)
             }
             InstanceTableMessage::Enter => match self.current() {
-                Some(item) => Ok(Some(Action::ReturnInstance(item))),
+                Some(item) => Ok(Some(InstanceTableOutputAction::ReturnInstance(item))),
                 None => Ok(None),
             },
-            InstanceTableMessage::Search => Ok(Some(Action::Search)),
+            InstanceTableMessage::Search => Ok(Some(InstanceTableOutputAction::Search)),
             InstanceTableMessage::RecentFirst => {
                 self.recent_first = !self.recent_first;
                 self.sort_instances();

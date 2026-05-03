@@ -1,10 +1,10 @@
-use std::time::Instant;
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Paragraph},
 };
+use std::time::Instant;
 
 const SPINNER_CHARS: [char; 4] = ['|', '/', '-', '\\'];
 const SPINNER_FRAME_DURATION_MS: u128 = 200;
@@ -44,12 +44,13 @@ impl LoadingScreen {
 
         // Get elapsed time and create spinning indicator
         let elapsed = self.start_time.elapsed();
-        let spinner_index = (elapsed.as_millis() / SPINNER_FRAME_DURATION_MS) as usize % SPINNER_CHARS.len();
+        let spinner_index =
+            (elapsed.as_millis() / SPINNER_FRAME_DURATION_MS) as usize % SPINNER_CHARS.len();
         let spinner = SPINNER_CHARS[spinner_index];
 
         // Create the loading message with spinner
         let loading_text = format!("{} {}", spinner, self.message);
-        
+
         // Create loading paragraph
         let loading_paragraph = Paragraph::new(loading_text)
             .block(
@@ -59,11 +60,15 @@ impl LoadingScreen {
                     .style(Style::default().fg(Color::Blue)),
             )
             .alignment(Alignment::Center)
-            .style(Style::default().fg(Color::White).add_modifier(Modifier::BOLD));
+            .style(
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            );
 
         frame.render_widget(loading_paragraph, horizontal[1]);
 
-        // Add elapsed time indicator and help text  
+        // Add elapsed time indicator and help text
         let elapsed_secs = elapsed.as_secs();
         let time_text = if elapsed_secs > 0 {
             format!("Elapsed: {}s", elapsed_secs)

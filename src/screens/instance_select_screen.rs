@@ -11,10 +11,10 @@ use ratatui::{
 use crate::{
     aws::InstanceInfo,
     components::{
-        Action, Component,
+        Component,
         header_tabs::{HeaderTabs, Tab},
-        instance_table::InstanceTable,
-        text_input::TextInput,
+        instance_table::{InstanceTable, InstanceTableOutputAction},
+        text_input::{TextInput, TextInputOutputAction},
     },
 };
 
@@ -46,7 +46,6 @@ impl InstanceSelectScreen {
             search_active: false,
         }
     }
-
 
     pub fn set_instances(&mut self, instances: Vec<InstanceInfo>) {
         self.instance_table_component.set_instances(instances);
@@ -85,38 +84,38 @@ impl Screen<Outcome> for InstanceSelectScreen {
                 let message = self.instance_table_component.handle_event(event);
                 let action = self.instance_table_component.update(message)?;
                 match action {
-                    Some(Action::Exit) => return Ok(Outcome::Exit),
-                    Some(Action::ReturnInstance(instance)) => {
+                    Some(InstanceTableOutputAction::Exit) => return Ok(Outcome::Exit),
+                    Some(InstanceTableOutputAction::ReturnInstance(instance)) => {
                         return Ok(Outcome::InstanceSelected(instance));
                     }
-                    Some(Action::Search) => {
+                    Some(InstanceTableOutputAction::Search) => {
                         self.search_active = true;
                     }
-                    _ => {}
+                    None => {}
                 }
             } else {
                 let message = self.search_component.handle_event(event);
                 let action = self.search_component.update(message)?;
                 match action {
-                    Some(Action::Exit) => {
+                    Some(TextInputOutputAction::Exit) => {
                         self.search_active = false;
                     }
-                    Some(Action::Return(search)) => {
+                    Some(TextInputOutputAction::Return(search)) => {
                         self.instance_table_component.apply_filter(search);
                         self.search_active = false;
                     }
-                    Some(Action::PartialReturn(search)) => {
+                    Some(TextInputOutputAction::PartialReturn(search)) => {
                         self.instance_table_component.apply_filter(search);
                     }
-                    Some(Action::ReturnWithKeyUp) => {
+                    Some(TextInputOutputAction::ReturnWithKeyUp) => {
                         self.instance_table_component.previous();
                         self.search_active = false;
                     }
-                    Some(Action::ReturnWithKeyDown) => {
+                    Some(TextInputOutputAction::ReturnWithKeyDown) => {
                         self.instance_table_component.next();
                         self.search_active = false;
                     }
-                    _ => {}
+                    None => {}
                 }
             }
         }

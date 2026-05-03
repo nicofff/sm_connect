@@ -57,9 +57,14 @@ impl HeaderTabs {
 }
 
 pub enum HeaderTabMessage {}
+pub enum HeaderTabOutputAction {}
 
 impl Component<HeaderTabMessage> for HeaderTabs {
-    fn update(&mut self, _msg: Option<HeaderTabMessage>) -> anyhow::Result<Option<super::Action>> {
+    type OutputAction = HeaderTabOutputAction;
+    fn update(
+        &mut self,
+        _msg: Option<HeaderTabMessage>,
+    ) -> anyhow::Result<Option<Self::OutputAction>> {
         Ok(None)
     }
 

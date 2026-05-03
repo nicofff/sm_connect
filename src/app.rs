@@ -1,18 +1,18 @@
 use crate::aws::InstanceInfo;
 
+use crate::components::loading_screen::LoadingScreen;
 use crate::screens::Screen;
 use crate::screens::config_screen::ConfigScreen;
 use crate::screens::instance_select_screen::InstanceSelectScreen;
 use crate::screens::region_select_screen;
 use crate::screens::region_select_screen::RegionSelectScreen;
-use crate::components::loading_screen::LoadingScreen;
 use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
 
 use anyhow::Context;
+use crossterm::event;
 use ratatui::prelude::*;
 use tokio::time::Duration;
-use crossterm::event;
 
 const LOADING_POLL_DURATION_MS: u64 = 50;
 
@@ -80,14 +80,16 @@ impl App {
                         }
                         region_select_screen::Outcome::RegionSelected(region) => {
                             self.selected_screen = SelectedScreen::LoadingInstances;
-                            self.loading_screen = Some(LoadingScreen::new(
-                                format!("Loading instances for region: {}", region)
-                            ));
-                            
+                            self.loading_screen = Some(LoadingScreen::new(format!(
+                                "Loading instances for region: {}",
+                                region
+                            )));
+
                             // Start the async loading task
                             let region_clone = region.clone();
                             self.loading_task = Some(tokio::spawn(async move {
-                                crate::aws::fetch_instances(aws_config::Region::new(region_clone)).await
+                                crate::aws::fetch_instances(aws_config::Region::new(region_clone))
+                                    .await
                             }));
                         }
                         region_select_screen::Outcome::OpenConfig => {
@@ -102,7 +104,7 @@ impl App {
                             loading_screen.draw(frame, frame.area());
                         })?;
                     }
-                    
+
                     // Check for any input events (like ESC to cancel)
                     if let Ok(true) = event::poll(Duration::from_millis(LOADING_POLL_DURATION_MS)) {
                         if let Ok(event) = event::read() {
@@ -123,7 +125,7 @@ impl App {
                         // This sleep ensures we redraw the spinner regularly
                         tokio::time::sleep(Duration::from_millis(LOADING_POLL_DURATION_MS)).await;
                     }
-                    
+
                     // Check if the loading task is complete
                     if let Some(task) = &mut self.loading_task {
                         if task.is_finished() {
@@ -161,68 +163,6 @@ impl App {
                     }
                 },
             }
-            // handle events
-            // let event = event::read()?;
-            // match self.status {
-            //     SelectedScreen::RegionSelect => {
-            //         let action = self.region_select_component.handle_action(event)?;
-            //         match action {
-            //             Action::Exit => {
-            //                 should_exit = true;
-            //             }
-            //             Action::Return(region) => {
-            //                 self.status = SelectedScreen::InstanceSelect;
-            //                 let instances = fetch_instances(Region::new(region)).await?;
-            //                 self.instance_selection_component
-            //                     .update_instances(instances);
-            //             }
-            //             Action::Hide(region) => {
-            //                 let mut config = self.config.lock().unwrap();
-            //                 config.hide_region(region)?;
-            //                 self.region_select_component
-            //                     .update_items(config.get_visible_regions());
-            //             }
-            //             Action::Reset => {
-            //                 let mut config = self.config.lock().unwrap();
-            //                 config.reset_hidden_regions()?;
-            //                 self.region_select_component
-            //                     .update_items(config.get_visible_regions());
-            //             }
-            //             Action::ToggleFavorite(region) => {
-            //                 let mut config = self.config.lock().unwrap();
-            //                 config.toggle_favorite_region(region)?;
-            //                 self.region_select_component
-            //                     .set_favorites(config.get_favorite_regions());
-            //             }
-            //             Action::OpenConfig => {
-            //                 self.status = SelectedScreen::Config;
-            //             }
-            //             _ => {}
-            //         }
-            //     }
-            //     SelectedScreen::InstanceSelect => {
-            //         let action = self.instance_selection_component.handle_action(event)?;
-            //         match action {
-            //             Action::Exit => {
-            //                 self.status = SelectedScreen::RegionSelect;
-            //             }
-            //             Action::ReturnInstance(instance) => {
-            //                 should_exit = true;
-            //                 return_value = Some(instance);
-            //             }
-            //             Action::Select(instance) => {
-            //                 self.info_panel_component.set_instance(instance);
-            //             }
-            //             _ => {}
-            //         }
-            //     }
-            //     SelectedScreen::Config => {
-            //         let action = self.config_panel.handle_action(event)?;
-            //         if let Action::Exit = action {
-            //             self.status = SelectedScreen::RegionSelect;
-            //         }
-            //     }
-            // }
 
             if should_exit {
                 break;

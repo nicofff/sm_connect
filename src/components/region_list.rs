@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use crate::app::config::Config;
 
+use super::Component;
 use super::get_help_styled;
-use super::{Action, Component};
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
@@ -190,7 +190,14 @@ pub enum RegionListEvent {
     Enter,
 }
 
+pub enum RegionListOutputAction {
+    Exit,
+    OpenConfig,
+    Return(String),
+}
+
 impl Component<RegionListEvent> for RegionList {
+    type OutputAction = RegionListOutputAction;
     fn handle_event(&self, event: Event) -> Option<RegionListEvent> {
         match event {
             Event::Key(key) => match key.code {
@@ -208,12 +215,12 @@ impl Component<RegionListEvent> for RegionList {
         }
     }
 
-    fn update(&mut self, msg: Option<RegionListEvent>) -> Result<Option<Action>> {
+    fn update(&mut self, msg: Option<RegionListEvent>) -> Result<Option<Self::OutputAction>> {
         let Some(msg) = msg else {
             return Ok(None);
         };
         match msg {
-            RegionListEvent::Exit => Ok(Some(Action::Exit)),
+            RegionListEvent::Exit => Ok(Some(RegionListOutputAction::Exit)),
             RegionListEvent::HideRegion => {
                 self.hide_region()?;
                 Ok(None)
@@ -222,7 +229,7 @@ impl Component<RegionListEvent> for RegionList {
                 self.reset_hidden_regions()?;
                 Ok(None)
             }
-            RegionListEvent::OpenConfig => Ok(Some(Action::OpenConfig)),
+            RegionListEvent::OpenConfig => Ok(Some(RegionListOutputAction::OpenConfig)),
             RegionListEvent::ToggleFavorite => {
                 self.toggle_favorite_region()?;
                 Ok(None)
@@ -236,7 +243,7 @@ impl Component<RegionListEvent> for RegionList {
                 Ok(None)
             }
             RegionListEvent::Enter => match self.current() {
-                Some(str) => Ok(Some(Action::ReturnRegion(str))),
+                Some(str) => Ok(Some(RegionListOutputAction::Return(str))),
                 None => Ok(None),
             },
         }

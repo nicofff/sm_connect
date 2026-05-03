@@ -9,9 +9,9 @@ mod history;
 use history::{History, HistoryEntry};
 mod screens;
 use anyhow::Result;
-use signal_hook::{consts::signal::*, iterator::Signals};
-use clap::Parser;
 use aws_config::Region;
+use clap::Parser;
+use signal_hook::{consts::signal::*, iterator::Signals};
 
 /// AWS Systems Manager Session Manager connection tool
 #[derive(Parser, Debug)]

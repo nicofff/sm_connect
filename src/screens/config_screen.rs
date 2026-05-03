@@ -6,9 +6,9 @@ use std::{
 use crate::{
     app::config::Config,
     components::{
-        Action, Component,
-        config_list::{ConfigList, ConfigOption},
-        text_input::TextInput,
+        Component,
+        config_list::{ConfigList, ConfigListOutputAction, ConfigOption},
+        text_input::{TextInput, TextInputOutputAction},
     },
     history::History,
 };
@@ -102,8 +102,8 @@ impl Screen<Outcome> for ConfigScreen {
                 let message = self.config_list.handle_event(event);
                 let action = self.config_list.update(message)?;
                 match action {
-                    Some(Action::Exit) => return Ok(Outcome::Exit),
-                    Some(Action::ReturnConfig(option)) => {
+                    Some(ConfigListOutputAction::Exit) => return Ok(Outcome::Exit),
+                    Some(ConfigListOutputAction::ReturnConfig(option)) => {
                         match option {
                             ConfigOption::ResetRecent => match History::reset() {
                                 Ok(_) => {
@@ -126,16 +126,15 @@ impl Screen<Outcome> for ConfigScreen {
                     None => {
                         self.last_operation_success = None;
                     }
-                    _ => {}
                 }
             } else {
                 let message = self.input_component.handle_event(event);
                 let action = self.input_component.update(message)?;
                 match action {
-                    Some(Action::Exit) => {
+                    Some(TextInputOutputAction::Exit) => {
                         self.input_active = false;
                     }
-                    Some(Action::Return(search)) => {
+                    Some(TextInputOutputAction::Return(search)) => {
                         if let Some(ConfigOption::SetRecentTimeout) = self.modifying_action {
                             if let Ok(timeout) = search.parse::<u64>() {
                                 self.config.lock().unwrap().set_recent_timeout(timeout)?;
@@ -146,7 +145,11 @@ impl Screen<Outcome> for ConfigScreen {
                         }
                         self.input_active = false;
                     }
-                    _ => {}
+                    Some(TextInputOutputAction::PartialReturn(_))
+                    | Some(TextInputOutputAction::ReturnWithKeyUp) 
+                    | Some(TextInputOutputAction::ReturnWithKeyDown) 
+                    | None
+                        => {}
                 }
             }
         }

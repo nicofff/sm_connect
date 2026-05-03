@@ -13,9 +13,9 @@ use ratatui::{
 use crate::{
     app::config::Config,
     components::{
-        Action, Component,
+        Component,
         header_tabs::{HeaderTabs, Tab},
-        region_list::RegionList,
+        region_list::{RegionList, RegionListOutputAction},
     },
 };
 
@@ -67,10 +67,12 @@ impl Screen<Outcome> for RegionSelectScreen {
             let message = self.region_select_component.handle_event(event);
             let action = self.region_select_component.update(message)?;
             match action {
-                Some(Action::Exit) => return Ok(Outcome::Exit),
-                Some(Action::ReturnRegion(region)) => return Ok(Outcome::RegionSelected(region)),
-                Some(Action::OpenConfig) => return Ok(Outcome::OpenConfig),
-                _ => {}
+                Some(RegionListOutputAction::Exit) => return Ok(Outcome::Exit),
+                Some(RegionListOutputAction::Return(region)) => {
+                    return Ok(Outcome::RegionSelected(region));
+                }
+                Some(RegionListOutputAction::OpenConfig) => return Ok(Outcome::OpenConfig),
+                None => {}
             }
         }
     }

@@ -1,4 +1,4 @@
-use crate::components::{Action, Component};
+use crate::components::Component;
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
@@ -104,10 +104,16 @@ pub enum ConfigListMessage {
     Enter,
 }
 
+pub enum ConfigListOutputAction {
+    Exit,
+    ReturnConfig(ConfigOption),
+}
+
 impl Component<ConfigListMessage> for ConfigList {
-    fn update(&mut self, msg: Option<ConfigListMessage>) -> Result<Option<Action>> {
+    type OutputAction = ConfigListOutputAction;
+    fn update(&mut self, msg: Option<ConfigListMessage>) -> Result<Option<Self::OutputAction>> {
         match msg {
-            Some(ConfigListMessage::Exit) => Ok(Some(Action::Exit)),
+            Some(ConfigListMessage::Exit) => Ok(Some(ConfigListOutputAction::Exit)),
             Some(ConfigListMessage::Up) => {
                 self.previous();
                 Ok(None)
@@ -117,7 +123,7 @@ impl Component<ConfigListMessage> for ConfigList {
                 Ok(None)
             }
             Some(ConfigListMessage::Enter) => match self.current() {
-                Some(option) => Ok(Some(Action::ReturnConfig(option))),
+                Some(option) => Ok(Some(ConfigListOutputAction::ReturnConfig(option))),
                 None => Ok(None),
             },
             None => Ok(None),

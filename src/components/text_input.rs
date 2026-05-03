@@ -4,8 +4,6 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Paragraph};
 use ratatui::{Frame, text::Text};
 
-use crate::components::Action;
-
 use super::Component;
 use anyhow::Result;
 #[derive(Debug, Clone)]
@@ -119,19 +117,28 @@ pub enum TextInputMessage {
     Enter,
 }
 
+pub enum TextInputOutputAction {
+    PartialReturn(String),
+    Exit,
+    ReturnWithKeyUp,
+    ReturnWithKeyDown,
+    Return(String),
+}
+
 impl Component<TextInputMessage> for TextInput {
-    fn update(&mut self, msg: Option<TextInputMessage>) -> Result<Option<Action>> {
+    type OutputAction = TextInputOutputAction;
+    fn update(&mut self, msg: Option<TextInputMessage>) -> Result<Option<Self::OutputAction>> {
         let Some(msg) = msg else {
             return Ok(None);
         };
         match msg {
             TextInputMessage::Char(c) => {
                 self.enter_char(c);
-                Ok(Some(Action::PartialReturn(self.get_value())))
+                Ok(Some(TextInputOutputAction::PartialReturn(self.get_value())))
             }
             TextInputMessage::Backspace => {
                 self.delete_char();
-                Ok(Some(Action::PartialReturn(self.get_value())))
+                Ok(Some(TextInputOutputAction::PartialReturn(self.get_value())))
             }
             TextInputMessage::Right => {
                 self.move_cursor_right();
@@ -141,10 +148,10 @@ impl Component<TextInputMessage> for TextInput {
                 self.move_cursor_left();
                 Ok(None)
             }
-            TextInputMessage::Esc => Ok(Some(Action::Exit)),
-            TextInputMessage::Up => Ok(Some(Action::ReturnWithKeyUp)),
-            TextInputMessage::Down => Ok(Some(Action::ReturnWithKeyDown)),
-            TextInputMessage::Enter => Ok(Some(Action::Return(self.get_value()))),
+            TextInputMessage::Esc => Ok(Some(TextInputOutputAction::Exit)),
+            TextInputMessage::Up => Ok(Some(TextInputOutputAction::ReturnWithKeyUp)),
+            TextInputMessage::Down => Ok(Some(TextInputOutputAction::ReturnWithKeyDown)),
+            TextInputMessage::Enter => Ok(Some(TextInputOutputAction::Return(self.get_value()))),
         }
     }
 

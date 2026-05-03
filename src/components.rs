@@ -5,7 +5,6 @@ pub mod loading_screen;
 pub mod region_list;
 pub mod text_input;
 use anyhow::Result;
-use config_list::ConfigOption;
 use crossterm::event::Event;
 use ratatui::{
     Frame,
@@ -15,23 +14,9 @@ use ratatui::{
     widgets::Cell,
 };
 
-use crate::aws::InstanceInfo;
-
-pub enum Action {
-    Exit,
-    Return(String),
-    ReturnRegion(String),
-    ReturnWithKeyUp,
-    ReturnWithKeyDown,
-    ReturnInstance(InstanceInfo),
-    ReturnConfig(ConfigOption),
-    OpenConfig,
-    PartialReturn(String),
-    Search,
-}
-
 pub trait Component<Message> {
-    fn update(&mut self, msg: Option<Message>) -> Result<Option<Action>>;
+    type OutputAction;
+    fn update(&mut self, msg: Option<Message>) -> Result<Option<Self::OutputAction>>;
     fn view(&mut self, frame: &mut Frame, area: Rect);
     fn handle_event(&self, event: Event) -> Option<Message>;
 }
