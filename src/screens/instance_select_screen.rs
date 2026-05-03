@@ -90,6 +90,12 @@ impl Screen<Outcome> for InstanceSelectScreen {
                     Some(InstanceTableOutputAction::ReturnInstance(instance)) => {
                         return Ok(Outcome::Connect(instance));
                     }
+                    Some(InstanceTableOutputAction::ReturnInstanceForTunnel(instance)) => {
+                        return Ok(Outcome::Tunnel(instance));
+                    }
+                    Some(InstanceTableOutputAction::ReturnInstanceForFileManager(instance)) => {
+                        return Ok(Outcome::FileManager(instance));
+                    }
                     Some(InstanceTableOutputAction::Search) => {
                         self.search_active = true;
                     }

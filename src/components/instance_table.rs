@@ -158,6 +158,8 @@ impl InstanceTable {
                     "Recent First"
                 },
             ),
+            get_help_styled('t', "Tunnel"),
+            get_help_styled('f', "File Manager"),
         ])];
 
         Table::new(
@@ -166,6 +168,8 @@ impl InstanceTable {
                 Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
+                Constraint::Min(10),
+                Constraint::Min(15),
             ],
         )
     }
@@ -178,10 +182,14 @@ pub enum InstanceTableMessage {
     Enter,
     Search,
     RecentFirst,
+    Tunnel,
+    FileManager,
 }
 pub enum InstanceTableOutputAction {
     Exit,
     ReturnInstance(InstanceInfo),
+    ReturnInstanceForTunnel(InstanceInfo),
+    ReturnInstanceForFileManager(InstanceInfo),
     Search,
 }
 
@@ -204,6 +212,14 @@ impl Component for InstanceTable {
             }
             InstanceTableMessage::Enter => match self.current() {
                 Some(item) => Ok(Some(InstanceTableOutputAction::ReturnInstance(item))),
+                None => Ok(None),
+            },
+            InstanceTableMessage::Tunnel => match self.current() {
+                Some(item) => Ok(Some(InstanceTableOutputAction::ReturnInstanceForTunnel(item))),
+                None => Ok(None),
+            },
+            InstanceTableMessage::FileManager => match self.current() {
+                Some(item) => Ok(Some(InstanceTableOutputAction::ReturnInstanceForFileManager(item))),
                 None => Ok(None),
             },
             InstanceTableMessage::Search => Ok(Some(InstanceTableOutputAction::Search)),
@@ -236,6 +252,8 @@ impl Component for InstanceTable {
                 KeyCode::Right | KeyCode::Enter => Some(InstanceTableMessage::Enter),
                 KeyCode::Char('/') => Some(InstanceTableMessage::Search),
                 KeyCode::Char('r') => Some(InstanceTableMessage::RecentFirst),
+                KeyCode::Char('t') => Some(InstanceTableMessage::Tunnel),
+                KeyCode::Char('f') => Some(InstanceTableMessage::FileManager),
                 _ => None,
             },
             _ => None,
