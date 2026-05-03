@@ -109,15 +109,16 @@ impl App {
                     if let Ok(true) = event::poll(Duration::from_millis(LOADING_POLL_DURATION_MS)) {
                         if let Ok(event) = event::read()
                             && let event::Event::Key(key) = event
-                                && key.code == event::KeyCode::Esc {
-                                    // Cancel the loading task if it's running
-                                    if let Some(task) = self.loading_task.take() {
-                                        task.abort();
-                                    }
-                                    self.selected_screen = SelectedScreen::RegionSelect;
-                                    self.loading_screen = None;
-                                    continue;
-                                }
+                            && key.code == event::KeyCode::Esc
+                        {
+                            // Cancel the loading task if it's running
+                            if let Some(task) = self.loading_task.take() {
+                                task.abort();
+                            }
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                            self.loading_screen = None;
+                            continue;
+                        }
                     } else {
                         // No input event, just continue to check if loading is done
                         // This sleep ensures we redraw the spinner regularly
@@ -127,18 +128,19 @@ impl App {
                     // Check if the loading task is complete
                     if let Some(task) = &mut self.loading_task
                         && task.is_finished()
-                            && let Some(task) = self.loading_task.take() {
-                                match task.await {
-                                    Ok(Ok(instances)) => {
-                                        self.instance_selection_screen.set_instances(instances);
-                                        self.selected_screen = SelectedScreen::InstanceSelect;
-                                        self.loading_screen = None;
-                                    }
-                                    Ok(Err(_)) | Err(_) => {
-                                        return Err(RuntimeError::FetchInstanceError.into());
-                                    }
-                                }
+                        && let Some(task) = self.loading_task.take()
+                    {
+                        match task.await {
+                            Ok(Ok(instances)) => {
+                                self.instance_selection_screen.set_instances(instances);
+                                self.selected_screen = SelectedScreen::InstanceSelect;
+                                self.loading_screen = None;
                             }
+                            Ok(Err(_)) | Err(_) => {
+                                return Err(RuntimeError::FetchInstanceError.into());
+                            }
+                        }
+                    }
                 }
                 SelectedScreen::InstanceSelect => {
                     match self.instance_selection_screen.run(&mut self.terminal)? {

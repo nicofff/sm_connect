@@ -3,7 +3,7 @@ use crossterm::event::{Event, KeyCode};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style, Stylize},
+    style::{Color, Modifier, Style},
     widgets::{Block, Borders, Cell, Row, Table, TableState},
 };
 
@@ -160,7 +160,7 @@ impl InstanceTable {
                 },
             ),
         ])];
-        
+
         Table::new(
             rows,
             vec![

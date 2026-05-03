@@ -146,10 +146,9 @@ impl Screen<Outcome> for ConfigScreen {
                         self.input_active = false;
                     }
                     Some(TextInputOutputAction::PartialReturn(_))
-                    | Some(TextInputOutputAction::ReturnWithKeyUp) 
-                    | Some(TextInputOutputAction::ReturnWithKeyDown) 
-                    | None
-                        => {}
+                    | Some(TextInputOutputAction::ReturnWithKeyUp)
+                    | Some(TextInputOutputAction::ReturnWithKeyDown)
+                    | None => {}
                 }
             }
         }

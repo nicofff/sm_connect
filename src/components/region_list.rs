@@ -42,9 +42,10 @@ impl RegionList {
     fn update_items(&mut self, items: Vec<String>) {
         self.items = items;
         if let Some(i) = self.state.selected_mut()
-            && *i >= self.items.len() {
-                *i = self.items.len() - 1;
-            }
+            && *i >= self.items.len()
+        {
+            *i = self.items.len() - 1;
+        }
         self.sort_list();
     }
 
