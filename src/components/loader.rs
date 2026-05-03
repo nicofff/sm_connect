@@ -28,9 +28,6 @@ impl<T> Loader<T> {
         }
     }
 
-    pub fn set_message<U: Into<String>>(&mut self, message: U) {
-        self.message = message.into()
-    }
 }
 
 pub enum LoaderMessage {
@@ -39,7 +36,6 @@ pub enum LoaderMessage {
 pub enum LoaderOutputAction<T> {
     Return(T),
     Exit,
-    Error
 }
 
 impl<T> Component for Loader<T> {
@@ -131,10 +127,7 @@ impl<T> Component for Loader<T> {
             Err(TryRecvError::Empty) => {
                 Ok(None)
             },
-            Err(TryRecvError::Closed) => {
-                self.message = "There was an error loading the information".into(); // TODO: should we recieve the error message as a param?
-                Ok(Some(LoaderOutputAction::Error))
-            },
+            Err(TryRecvError::Closed) => Err(anyhow::anyhow!("Loading task terminated unexpectedly")),
         }
     }
 

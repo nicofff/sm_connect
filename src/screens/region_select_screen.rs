@@ -21,12 +21,12 @@ use anyhow::{Context, Result};
 
 use super::Screen;
 
+type FetchResult = Result<Vec<InstanceInfo>>;
+
 pub struct RegionSelectScreen {
     header_tabs_component: HeaderTabs,
     region_select_component: RegionList,
-    loader_component: Loader<Result<Vec<crate::aws::InstanceInfo>>>,
-    loader_tx: Option<oneshot::Sender<Result<Vec<crate::aws::InstanceInfo>>>>,
-    is_waiting_for_instances: bool
+    loader_component: Option<Loader<FetchResult>>,
 }
 
 pub enum Outcome {
@@ -40,14 +40,10 @@ impl RegionSelectScreen {
         let region_select_component = RegionList::new(config.clone());
         let mut header_tabs_component = HeaderTabs::new();
         header_tabs_component.set_selected(Tab::Region);
-        let (tx,rx) = oneshot::channel();
-        let loader_component = Loader::new("Loading instances",rx);
         Self {
             header_tabs_component,
             region_select_component,
-            loader_component,
-            loader_tx: Some(tx),
-            is_waiting_for_instances: false
+            loader_component: None,
         }
     }
 
@@ -60,8 +56,8 @@ impl RegionSelectScreen {
                 .split(frame.area());
             self.header_tabs_component.view(frame, layout[0]);
             self.region_select_component.view(frame, layout[1]);
-            if self.is_waiting_for_instances {
-                self.loader_component.view(frame, layout[1]);
+            if let Some(loader) = self.loader_component.as_mut() {
+                loader.view(frame, layout[1]);
             }
         })?;
         Ok(())
@@ -72,19 +68,23 @@ impl Screen<Outcome> for RegionSelectScreen {
     fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
         loop {
             self.draw(terminal)?;
-            if self.is_waiting_for_instances {
+            if let Some(loader) = self.loader_component.as_mut() {
                 let message = if event::poll(Duration::from_millis(50))? {
-                    self.loader_component.handle_event(event::read()?)
+                    loader.handle_event(event::read()?)
                 } else {
                     None
                 };
-                let action = self.loader_component.update(message)?;
+                let action = loader.update(message)
+                    .context("Unexpected error while fetching instances")?;
                 match action {
-                    Some(LoaderOutputAction::Exit) => return Ok(Outcome::Exit),
-                    Some(LoaderOutputAction::Error) => return Ok(Outcome::Exit), // TODO: Error handling?
-                    Some(LoaderOutputAction::Return(data)) => {return Ok(Outcome::InstancesFetched(data
-                        .context("Failed to fetch instances. Check your AWS credentials.")?))},
-                    None => {},
+                    Some(LoaderOutputAction::Exit) => {
+                        self.loader_component = None;
+                    }
+                    Some(LoaderOutputAction::Return(data)) => {
+                        return Ok(Outcome::InstancesFetched(data
+                            .context("Failed to fetch instances. Check your AWS credentials.")?))
+                    }
+                    None => {}
                 }
             } else {
                 let message = if event::poll(Duration::from_millis(50))? {
@@ -96,23 +96,18 @@ impl Screen<Outcome> for RegionSelectScreen {
                 match action {
                     Some(RegionListOutputAction::Exit) => return Ok(Outcome::Exit),
                     Some(RegionListOutputAction::Return(region)) => {
-                        self.loader_component.set_message(format!("Loading instances for region {}",&region));
+                        let (tx, rx) = oneshot::channel();
                         let cloned_region = region.clone();
-                        // we should only enter here once, so this shouldn't panic
-                        // TODO: enforce that.
-                        let sender = self.loader_tx.take().unwrap(); 
-                        tokio::spawn(async {
-                            let fetched_instances = crate::aws::fetch_instances(aws_config::Region::new(cloned_region))
-                                .await;
-                            let _ = sender.send(fetched_instances);
+                        tokio::spawn(async move {
+                            let _ = tx.send(crate::aws::fetch_instances(aws_config::Region::new(cloned_region)).await);
                         });
-                        self.is_waiting_for_instances = true;
+                        let loader = Loader::new(format!("Loading instances for region {}", region), rx);
+                        self.loader_component = Some(loader);
                     }
                     Some(RegionListOutputAction::OpenConfig) => return Ok(Outcome::OpenConfig),
                     None => {}
                 }
             }
-            
         }
     }
 }
