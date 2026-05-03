@@ -2,7 +2,7 @@ mod aws;
 use aws::InstanceInfo;
 mod app;
 mod ui;
-use app::App;
+use app::{App, UserAction};
 use std::net::TcpListener;
 use std::process::Command;
 mod components;
@@ -65,12 +65,10 @@ async fn main() -> Result<()> {
                 eprintln!("  caused by: {}", cause);
             }
         },
-        Ok(Some(instance)) => {
-            if args.tunnel {
-                tunnel(instance)?;
-            } else {
-                connect(instance)?;
-            }
+        Ok(Some(UserAction::Connect(instance))) => connect(instance)?,
+        Ok(Some(UserAction::Tunnel(instance))) => tunnel(instance)?,
+        Ok(Some(UserAction::FileManager(_instance))) => {
+            eprintln!("File manager not yet implemented");
         }
         Ok(None) => {}
     }

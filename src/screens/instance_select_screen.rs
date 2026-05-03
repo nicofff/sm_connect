@@ -30,7 +30,9 @@ pub struct InstanceSelectScreen {
 
 pub enum Outcome {
     Exit,
-    InstanceSelected(InstanceInfo),
+    Connect(InstanceInfo),
+    Tunnel(InstanceInfo),
+    FileManager(InstanceInfo),
 }
 
 impl InstanceSelectScreen {
@@ -86,7 +88,7 @@ impl Screen<Outcome> for InstanceSelectScreen {
                 match action {
                     Some(InstanceTableOutputAction::Exit) => return Ok(Outcome::Exit),
                     Some(InstanceTableOutputAction::ReturnInstance(instance)) => {
-                        return Ok(Outcome::InstanceSelected(instance));
+                        return Ok(Outcome::Connect(instance));
                     }
                     Some(InstanceTableOutputAction::Search) => {
                         self.search_active = true;

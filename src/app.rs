@@ -19,6 +19,13 @@ use anyhow::Result;
 pub mod config;
 
 #[derive(Debug, Clone)]
+pub enum UserAction {
+    Connect(InstanceInfo),
+    Tunnel(InstanceInfo),
+    FileManager(InstanceInfo),
+}
+
+#[derive(Debug, Clone)]
 pub enum SelectedScreen {
     RegionSelect,
     LoadingInstances(String),
@@ -50,9 +57,9 @@ impl App {
         })
     }
 
-    pub async fn run(&mut self) -> Result<Option<InstanceInfo>> {
+    pub async fn run(&mut self) -> Result<Option<UserAction>> {
         let mut should_exit = false;
-        let mut return_value: Option<InstanceInfo> = None;
+        let mut return_value: Option<UserAction> = None;
         loop {
             match self.selected_screen.clone() {
                 SelectedScreen::RegionSelect => {
@@ -82,11 +89,23 @@ impl App {
                         crate::screens::instance_select_screen::Outcome::Exit => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
-                        crate::screens::instance_select_screen::Outcome::InstanceSelected(
+                        crate::screens::instance_select_screen::Outcome::Connect(
                             instance_info,
                         ) => {
                             should_exit = true;
-                            return_value = Some(instance_info);
+                            return_value = Some(UserAction::Connect(instance_info));
+                        }
+                        crate::screens::instance_select_screen::Outcome::Tunnel(
+                            instance_info,
+                        ) => {
+                            should_exit = true;
+                            return_value = Some(UserAction::Tunnel(instance_info));
+                        }
+                        crate::screens::instance_select_screen::Outcome::FileManager(
+                            instance_info,
+                        ) => {
+                            should_exit = true;
+                            return_value = Some(UserAction::FileManager(instance_info));
                         }
                     }
                 }
