@@ -21,7 +21,7 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use super::Screen;
 
@@ -79,7 +79,7 @@ impl ConfigScreen {
                     frame.render_widget(line, overlay_layout[1]);
                 }
                 Some(false) => {
-                    let line = Paragraph::new(Text::from("Operation successful"))
+                    let line = Paragraph::new(Text::from("Operation failed"))
                         .centered()
                         .bg(Color::Red)
                         .block(Block::default().borders(Borders::ALL));
@@ -105,15 +105,10 @@ impl Screen<Outcome> for ConfigScreen {
                     Some(ConfigListOutputAction::Exit) => return Ok(Outcome::Exit),
                     Some(ConfigListOutputAction::ReturnConfig(option)) => {
                         match option {
-                            ConfigOption::ResetRecent => match History::reset() {
-                                Ok(_) => {
-                                    self.last_operation_success = Some(true);
-                                }
-                                Err(_e) => {
-                                    //eprintln!("Error resetting history: {:?}", e);
-                                    self.last_operation_success = Some(false);
-                                }
-                            },
+                            ConfigOption::ResetRecent => {
+                                History::reset().context("Failed to reset history")?;
+                                self.last_operation_success = Some(true);
+                            }
                             ConfigOption::SetRecentTimeout => {
                                 self.modifying_action = Some(ConfigOption::SetRecentTimeout);
                                 self.input_active = true;

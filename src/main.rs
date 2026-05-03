@@ -43,13 +43,14 @@ async fn main() -> Result<()> {
     let selected = app.run().await;
     drop(app);
     match selected {
-        Err(e) => match e.downcast_ref() {
-            Some(app::RuntimeError::UserExit) => {}
-            _ => {
-                println!("{:?}", e);
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            for cause in e.chain().skip(1) {
+                eprintln!("  caused by: {}", cause);
             }
         },
-        Ok(instance) => connect(instance)?,
+        Ok(Some(instance)) => connect(instance)?,
+        Ok(None) => {}
     }
     Ok(())
 }

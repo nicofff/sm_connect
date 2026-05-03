@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
@@ -89,11 +89,15 @@ impl History {
     }
 
     pub fn reset() -> Result<()> {
-        let file = Self::get_history_path()?;
+        let path = Self::get_history_path()?;
+        if !path.exists() {
+            return Ok(());
+        }
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .truncate(true)
-            .open(file)?;
+            .open(path)
+            .context("Failed to open history file")?;
         file.flush()?;
         Ok(())
     }

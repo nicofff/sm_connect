@@ -17,7 +17,7 @@ use crate::{
     }
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use super::Screen;
 
@@ -82,7 +82,8 @@ impl Screen<Outcome> for RegionSelectScreen {
                 match action {
                     Some(LoaderOutputAction::Exit) => return Ok(Outcome::Exit),
                     Some(LoaderOutputAction::Error) => return Ok(Outcome::Exit), // TODO: Error handling?
-                    Some(LoaderOutputAction::Return(data)) => {return Ok(Outcome::InstancesFetched(data?))},
+                    Some(LoaderOutputAction::Return(data)) => {return Ok(Outcome::InstancesFetched(data
+                        .context("Failed to fetch instances. Check your AWS credentials.")?))},
                     None => {},
                 }
             } else {

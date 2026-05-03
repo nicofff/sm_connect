@@ -14,7 +14,6 @@ use ratatui::prelude::*;
 use std::io::Stdout;
 
 use anyhow::Result;
-use thiserror::Error;
 
 pub mod config;
 
@@ -23,14 +22,6 @@ pub enum SelectedScreen {
     RegionSelect,
     InstanceSelect,
     Config,
-}
-
-#[derive(Error, Debug)]
-pub enum RuntimeError {
-    #[error("User exited the application")]
-    UserExit,
-    #[error("Error fetching instances. Check your AWS credentials and try again.")]
-    FetchInstanceError,
 }
 
 pub struct App {
@@ -57,7 +48,7 @@ impl App {
         })
     }
 
-    pub async fn run(&mut self) -> Result<InstanceInfo> {
+    pub async fn run(&mut self) -> Result<Option<InstanceInfo>> {
         let mut should_exit = false;
         let mut return_value: Option<InstanceInfo> = None;
         loop {
@@ -102,8 +93,8 @@ impl App {
             }
         }
         match return_value {
-            Some(instance) => Ok(instance),
-            None => Err(RuntimeError::UserExit.into()),
+            Some(instance) => Ok(Some(instance)),
+            None => Ok(None),
         }
     }
 }

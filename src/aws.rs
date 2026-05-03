@@ -104,11 +104,11 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
         .send()
         .await?;
 
-    let binding = result.reservations.unwrap();
+    let binding = result.reservations.unwrap_or_default();
     let recents = History::read()?;
     let instances: Vec<InstanceInfo> = binding
         .iter()
-        .flat_map(|reservation| reservation.instances.clone().unwrap())
+        .flat_map(|reservation| reservation.instances.clone().unwrap_or_default())
         .map(|instance: Instance| {
             let last_accessed = recents
                 .get(&instance.instance_id.clone().unwrap_or_default())
