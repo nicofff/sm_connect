@@ -2,6 +2,7 @@ pub mod config_screen;
 pub mod instance_select_screen;
 pub mod loading_instances_screen;
 pub mod region_select_screen;
+pub mod username_prompt_screen;
 
 use std::io::Stdout;
 
