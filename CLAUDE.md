@@ -1,3 +1,7 @@
+# Good practices
+
+Never run build with the --release flag. The aws crates take a long time to compile, and jumping between release and debug builds is a waste of time. 
+
 # Release Process
 
 1. Review changes since the last tag to build the changelog:
