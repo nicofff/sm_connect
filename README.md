@@ -16,6 +16,10 @@ It leverages AWS Session Manager to connect to your EC2 instances, which doesn't
 Also, it removes the complexity of connecting to it, by providing an easy way to find which server you want to connect to, and piping out the the correct AWS CLI command.
 Bonus points for not needing SSH anymore.
 
+# AI Usage Disclaimer
+Most of the tool was written before AI became mainstream. I've been using Claude lately.
+There core of the tool is hand-written, the latest aditions (like the file manager) have been built with AI assistance
+
 # Install
 
 ```sh
