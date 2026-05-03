@@ -11,6 +11,7 @@ use crate::screens::Screen;
 use crate::screens::connecting_screen::{ConnectingScreen, Outcome as ConnectingOutcome};
 use crate::screens::file_manager_screen::FileManagerScreen;
 use crate::screens::username_prompt_screen::{UsernamePromptScreen, Outcome as UsernameOutcome};
+use anyhow::anyhow;
 use crate::ui::{restore_terminal, setup_terminal};
 
 pub struct FileManagerApp {
@@ -42,8 +43,7 @@ impl FileManagerApp {
             match screen.run(&mut self.terminal)? {
                 ConnectingOutcome::Connected(client, child) => (client, child),
                 ConnectingOutcome::Failed(msg) => {
-                    eprintln!("Failed to connect: {msg}");
-                    return Ok(());
+                    return Err(anyhow!(msg));
                 }
                 ConnectingOutcome::Cancelled => return Ok(()),
             }

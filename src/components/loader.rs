@@ -56,7 +56,7 @@ impl<T> Component for Loader<T> {
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Fill(1),
-                Constraint::Min(40),
+                Constraint::Min(60),
                 Constraint::Fill(1),
             ])
             .split(vertical[1]);
@@ -79,6 +79,7 @@ impl<T> Component for Loader<T> {
                     .style(Style::default().fg(Color::Blue)),
             )
             .alignment(Alignment::Center)
+            .wrap(ratatui::widgets::Wrap { trim: false })
             .style(
                 Style::default()
                     .fg(Color::White)
