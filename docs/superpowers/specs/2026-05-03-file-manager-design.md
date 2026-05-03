@@ -56,7 +56,7 @@ Help bar gains: `t: Tunnel  f: File Manager`.
 
 ### `src/sftp.rs` (new)
 
-Pure SFTP client, no UI coupling. Ported and cleaned up from sftui — ProxyJump machinery dropped entirely. Auth is always ssh-agent; the tunnel is already established before connection.
+Pure async SFTP client, no UI coupling. Built on `russh` + `russh-sftp` (pure Rust, no OpenSSL). Auth is always ssh-agent; the SSM tunnel is already established before connection.
 
 ```rust
 pub struct FileInfo {
@@ -69,18 +69,18 @@ pub struct FileInfo {
 pub struct SftpClient { ... }
 
 impl SftpClient {
-    pub fn connect(host: &str, port: u16, user: &str) -> Result<Self>
-    pub fn list_directory(&self, path: &Path) -> Result<Vec<FileInfo>>
-    pub fn download_file(&self, remote: &Path, local: &Path) -> Result<()>
-    pub fn upload_file(&self, local: &Path, remote: &Path) -> Result<()>
-    pub fn download_directory(&self, remote: &Path, local: &Path) -> Result<()>
-    pub fn upload_directory(&self, local: &Path, remote: &Path) -> Result<()>
+    pub async fn connect(host: &str, port: u16, user: &str) -> Result<Self>
+    pub async fn list_directory(&self, path: &Path) -> Result<Vec<FileInfo>>
+    pub async fn download_file(&self, remote: &Path, local: &Path) -> Result<()>
+    pub async fn upload_file(&self, local: &Path, remote: &Path) -> Result<()>
+    pub async fn download_directory(&self, remote: &Path, local: &Path) -> Result<()>
+    pub async fn upload_directory(&self, local: &Path, remote: &Path) -> Result<()>
 }
 ```
 
-Improvements over sftui:
-- `upload_file`/`download_file` use `std::io::copy` instead of manual buffer loops.
-- `download_directory` added (missing from sftui).
+All methods are `async fn` since `russh-sftp` is async-native and the project already uses tokio.
+
+**Async boundary with sync screens:** async SFTP operations are dispatched via `tokio::spawn` + `oneshot` channel, matching the existing pattern in `LoadingInstancesScreen`. The `Screen` trait remains synchronous; the file manager screen fires off operations and polls for results with a short timeout in the event loop.
 
 ### `src/file_manager_app.rs` (new)
 
@@ -161,10 +161,11 @@ fn launch_file_manager(instance: InstanceInfo) -> Result<()>
 
 Add to `Cargo.toml`:
 ```toml
-ssh2 = "0.9"
+russh = "0.50"
+russh-sftp = "2.0"
 ```
 
-Requires OpenSSL on the build machine (same constraint as sftui). On macOS: `brew install openssl@3`.
+Pure Rust, no C dependencies, no OpenSSL required.
 
 ---
 
