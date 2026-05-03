@@ -56,16 +56,19 @@ impl SftpClient {
         }
 
         let mut authenticated = false;
-        for identity in &identities {
-            let public_key = identity.public_key();
-            let result = handle
+        for identity in identities {
+            let public_key = identity.public_key().clone();
+            match handle
                 .authenticate_publickey_with(user, public_key.into_owned(), None, &mut agent)
                 .await
-                .map_err(|e| anyhow!("SSH agent authentication failed: {e}"))?;
-
-            if result.success() {
-                authenticated = true;
-                break;
+            {
+                Ok(auth_result) => {
+                    if auth_result.success() {
+                        authenticated = true;
+                        break;
+                    }
+                }
+                Err(_) => continue, // transport error on this key — try next
             }
         }
 
@@ -91,9 +94,10 @@ impl SftpClient {
             .map(|entry| {
                 let is_dir = entry.file_type().is_dir();
                 let size = entry.metadata().len();
+                let name = entry.file_name();
                 FileInfo {
-                    name: entry.file_name(),
-                    path: path.join(entry.file_name()),
+                    path: path.join(&name),
+                    name,
                     is_dir,
                     size,
                 }
@@ -105,6 +109,16 @@ impl SftpClient {
             (false, true) => std::cmp::Ordering::Greater,
             _ => a.name.cmp(&b.name),
         });
+
+        // Prepend .. for navigation (russh-sftp ReadDir skips . and ..)
+        if let Some(parent) = path.parent() {
+            files.insert(0, FileInfo {
+                name: "..".to_string(),
+                path: parent.to_path_buf(),
+                is_dir: true,
+                size: 0,
+            });
+        }
 
         Ok(files)
     }
