@@ -342,22 +342,20 @@ impl FileManagerScreen {
                     },
                     KeyCode::Enter => match self.active {
                         ActivePane::Local => {
-                            if let Some(i) = self.local_pane.current_index() {
-                                if let Some(f) = self.local_files.get(i) {
-                                    if f.is_dir {
+                            if let Some(i) = self.local_pane.current_index()
+                                && let Some(f) = self.local_files.get(i)
+                                    && f.is_dir {
                                         self.local_path = f.path.clone();
                                         self.local_files =
                                             Self::read_local_dir(&self.local_path)?;
                                         self.local_pane.set_item_count(self.local_files.len());
                                         self.local_pane.clear_selection();
                                     }
-                                }
-                            }
                         }
                         ActivePane::Remote => {
-                            if let Some(i) = self.remote_pane.current_index() {
-                                if let Some(f) = self.remote_files.get(i).cloned() {
-                                    if f.is_dir {
+                            if let Some(i) = self.remote_pane.current_index()
+                                && let Some(f) = self.remote_files.get(i).cloned()
+                                    && f.is_dir {
                                         self.remote_path = f.path.clone();
                                         match self.refresh_remote(sftp) {
                                             Ok(()) => self.status = format!("Remote: {}", self.remote_path.display()),
@@ -365,24 +363,20 @@ impl FileManagerScreen {
                                         }
                                         self.remote_pane.clear_selection();
                                     }
-                                }
-                            }
                         }
                     },
                     KeyCode::Char(' ') => match self.active {
                         ActivePane::Local => {
-                            if let Some(i) = self.local_pane.current_index() {
-                                if self.local_files.get(i).map(|f| f.name.as_str()) != Some("..") {
+                            if let Some(i) = self.local_pane.current_index()
+                                && self.local_files.get(i).map(|f| f.name.as_str()) != Some("..") {
                                     self.local_pane.toggle_selected(i);
                                 }
-                            }
                         }
                         ActivePane::Remote => {
-                            if let Some(i) = self.remote_pane.current_index() {
-                                if self.remote_files.get(i).map(|f| f.name.as_str()) != Some("..") {
+                            if let Some(i) = self.remote_pane.current_index()
+                                && self.remote_files.get(i).map(|f| f.name.as_str()) != Some("..") {
                                     self.remote_pane.toggle_selected(i);
                                 }
-                            }
                         }
                     },
                     _ => {}

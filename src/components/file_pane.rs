@@ -42,7 +42,7 @@ impl FilePane {
     pub fn set_item_count(&mut self, count: usize) {
         if count == 0 {
             self.state.select(None);
-        } else if self.state.selected().map_or(true, |i| i >= count) {
+        } else if self.state.selected().is_none_or(|i| i >= count) {
             self.state.select(Some(0));
         }
     }
