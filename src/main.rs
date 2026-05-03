@@ -139,8 +139,10 @@ fn connect_demo(instance: InstanceInfo) -> Result<()> {
         &instance.get_instance_id()[2..10]
     );
     let hostname = instance.get_name().to_lowercase().replace('-', "_");
+    std::thread::sleep(std::time::Duration::from_secs(3));
     println!("\nStarting session with SessionId: {session_id}");
     println!("/bin/bash");
+    std::thread::sleep(std::time::Duration::from_secs(2));
     println!("sh-5.2$ /bin/bash");
     println!("[ssm-user@{hostname} bin]$");
     std::thread::sleep(std::time::Duration::from_secs(60));
