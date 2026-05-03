@@ -143,6 +143,7 @@ fn connect_demo(instance: InstanceInfo) -> Result<()> {
     println!("/bin/bash");
     println!("sh-5.2$ /bin/bash");
     println!("[ssm-user@{hostname} bin]$");
+    std::thread::sleep(std::time::Duration::from_secs(60));
     Ok(())
 }
 
