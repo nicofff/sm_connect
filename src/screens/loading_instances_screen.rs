@@ -24,11 +24,48 @@ pub enum Outcome {
 }
 
 impl LoadingInstancesScreen {
-    pub fn new(region: String) -> Self {
+    pub fn new(region: String, demo: bool) -> Self {
         let (tx, rx) = oneshot::channel();
         let message = format!("Loading instances for region {}", region);
         tokio::spawn(async move {
-            let _ = tx.send(crate::aws::fetch_instances(aws_config::Region::new(region)).await);
+            if demo {
+                tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+                let fake = vec![
+                    crate::aws::InstanceInfo::new_demo(
+                        aws_config::Region::new(region.clone()),
+                        "prod-web-01".into(),
+                        "i-0a1b2c3d4e5f00001".into(),
+                        "54.210.12.34".into(),
+                    ),
+                    crate::aws::InstanceInfo::new_demo(
+                        aws_config::Region::new(region.clone()),
+                        "prod-api-01".into(),
+                        "i-0a1b2c3d4e5f00002".into(),
+                        "54.210.12.35".into(),
+                    ),
+                    crate::aws::InstanceInfo::new_demo(
+                        aws_config::Region::new(region.clone()),
+                        "prod-worker-01".into(),
+                        "i-0a1b2c3d4e5f00003".into(),
+                        "10.0.1.10".into(),
+                    ),
+                    crate::aws::InstanceInfo::new_demo(
+                        aws_config::Region::new(region.clone()),
+                        "staging-web-01".into(),
+                        "i-0a1b2c3d4e5f00004".into(),
+                        "34.205.67.89".into(),
+                    ),
+                    crate::aws::InstanceInfo::new_demo(
+                        aws_config::Region::new(region),
+                        "staging-api-01".into(),
+                        "i-0a1b2c3d4e5f00005".into(),
+                        "34.205.67.90".into(),
+                    ),
+                ];
+                let _ = tx.send(Ok(fake));
+            } else {
+                let _ = tx.send(crate::aws::fetch_instances(aws_config::Region::new(region)).await);
+            }
         });
         Self {
             loader: Loader::new(message, rx),

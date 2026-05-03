@@ -47,6 +47,17 @@ impl InstanceInfo {
         }
     }
 
+    pub fn new_demo(region: Region, name: String, instance_id: String, public_ip: String) -> Self {
+        InstanceInfo {
+            region,
+            name,
+            instance_id,
+            public_ip,
+            private_ip: String::new(),
+            last_access: None,
+        }
+    }
+
     fn get_tags_map(instance: &Instance) -> HashMap<String, String> {
         let Some(ref tags) = instance.tags else {
             return HashMap::new();

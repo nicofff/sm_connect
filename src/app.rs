@@ -39,10 +39,11 @@ pub struct App {
     region_select_screen: RegionSelectScreen,
     instance_selection_screen: InstanceSelectScreen,
     config_screen: ConfigScreen,
+    demo: bool,
 }
 
 impl App {
-    pub fn new() -> Result<Self> {
+    pub fn new(demo: bool) -> Result<Self> {
         let terminal = setup_terminal().context("setup failed")?;
         let config = config::Config::new()?;
         let region_select_screen = RegionSelectScreen::new(config.clone());
@@ -54,6 +55,7 @@ impl App {
             region_select_screen,
             instance_selection_screen,
             config_screen,
+            demo,
         })
     }
 
@@ -74,7 +76,7 @@ impl App {
                     }
                 }
                 SelectedScreen::LoadingInstances(region) => {
-                    match LoadingInstancesScreen::new(region).run(&mut self.terminal)? {
+                    match LoadingInstancesScreen::new(region, self.demo).run(&mut self.terminal)? {
                         loading_instances_screen::Outcome::Cancelled => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }

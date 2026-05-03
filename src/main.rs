@@ -36,6 +36,10 @@ struct Args {
     /// Open integrated file manager over SSM tunnel
     #[arg(short, long)]
     file_manager: bool,
+
+    /// Run in demo mode with fake instances (no AWS credentials required)
+    #[arg(long)]
+    demo: bool,
 }
 
 fn pick_local_port() -> Result<u16> {
@@ -64,7 +68,7 @@ async fn main() -> Result<()> {
     }
 
     // Otherwise, run the interactive UI
-    let mut app = App::new()?;
+    let mut app = App::new(args.demo)?;
     let selected = app.run().await;
     drop(app);
     match selected {
@@ -74,7 +78,13 @@ async fn main() -> Result<()> {
                 eprintln!("  caused by: {}", cause);
             }
         },
-        Ok(Some(UserAction::Connect(instance))) => connect(instance)?,
+        Ok(Some(UserAction::Connect(instance))) => {
+            if args.demo {
+                connect_demo(instance)?;
+            } else {
+                connect(instance)?;
+            }
+        }
         Ok(Some(UserAction::Tunnel(instance))) => tunnel(instance)?,
         Ok(Some(UserAction::FileManager(instance))) => launch_file_manager(instance)?,
         Ok(None) => {}
@@ -121,6 +131,19 @@ fn tunnel(instance: InstanceInfo) -> Result<()> {
 fn launch_file_manager(instance: InstanceInfo) -> Result<()> {
     let mut app = FileManagerApp::new()?;
     app.run(instance)
+}
+
+fn connect_demo(instance: InstanceInfo) -> Result<()> {
+    let session_id = format!(
+        "demo.user@example.com-{}",
+        &instance.get_instance_id()[2..10]
+    );
+    let hostname = instance.get_name().to_lowercase().replace('-', "_");
+    println!("\nStarting session with SessionId: {session_id}");
+    println!("/bin/bash");
+    println!("sh-5.2$ /bin/bash");
+    println!("[ssm-user@{hostname} bin]$");
+    Ok(())
 }
 
 fn connect(instance: InstanceInfo) -> Result<()> {
