@@ -64,6 +64,7 @@ sm_connect -r us-east-1 -i i-ad53d5e3831ea
 - `-r, --region <REGION>`: AWS region (e.g., us-east-1, us-west-2)
 - `-i, --instance <INSTANCE>`: AWS EC2 instance ID (e.g., i-ad53d5e3831ea)
 - `-t, --tunnel`: Forward the instance's SSH port (22) over SSM to a random local port, then print the SFTP URL for use with a file manager. Requires SSH running on the instance; authentication is handled by your file manager.
+- `-f, --file-manager`: Open an integrated dual-pane file manager connected to the instance over an SSM tunnel. Requires SSH running on the instance (port 22) and ssh-agent running locally with the correct key loaded.
 - `-h, --help`: Print help information
 - `-V, --version`: Print version information
 
@@ -84,6 +85,35 @@ sm_connect -r us-east-1 -i i-ad53d5e3831ea --tunnel
 `sm_connect` prints an SFTP URL (e.g. `sftp://localhost:52341`) that you can open in any file manager (Cyberduck, Transmit, Finder, Midnight Commander, etc.). Press Ctrl+C when done to close the tunnel.
 
 > **Prerequisites:** SSH must be running on the instance (port 22). Your file manager handles authentication using your existing SSH credentials.
+
+## File Manager Mode
+
+To browse and transfer files interactively:
+
+```sh
+sm_connect --file-manager
+```
+
+Or directly, skipping instance selection:
+
+```sh
+sm_connect -r us-east-1 -i i-ad53d5e3831ea --file-manager
+```
+
+You will be prompted for the SSH username. After connecting, a dual-pane file manager opens with your local filesystem on the left and the remote instance on the right.
+
+### Key bindings
+
+| Key        | Action                     |
+|------------|----------------------------|
+| Tab        | Switch active pane         |
+| ↑/↓ or j/k | Navigate                   |
+| Enter      | Enter directory            |
+| Space      | Select/deselect file       |
+| t          | Open transfer confirmation |
+| q / Esc    | Quit                       |
+
+> **Prerequisites:** SSH must be running on the instance (port 22). `ssh-agent` must be running locally with the correct key: `eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_rsa`
 
 [aws-cli-install]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 [aws-sm-install]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
