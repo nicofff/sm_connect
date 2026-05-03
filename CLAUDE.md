@@ -13,7 +13,7 @@
    git commit -m "Bump version to x.y.z"
    ```
 
-3. Tag with the changelog as the message:
+3. Verify the working tree is clean (`git status`), then tag with the changelog as the message:
    ```
    git tag -a vx.y.z -m "..."
    ```
