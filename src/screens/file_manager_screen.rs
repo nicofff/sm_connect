@@ -168,7 +168,7 @@ impl FileManagerScreen {
         })
     }
 
-    fn refresh_remote(&mut self, sftp: &SftpClient) {
+    fn refresh_remote(&mut self, sftp: &SftpClient) -> Result<()> {
         let remote_path = self.remote_path.clone();
         let result = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(sftp.list_directory(&remote_path))
@@ -177,11 +177,9 @@ impl FileManagerScreen {
             Ok(files) => {
                 self.remote_files = files;
                 self.remote_pane.set_item_count(self.remote_files.len());
-                self.status = format!("Remote: {}", self.remote_path.display());
+                Ok(())
             }
-            Err(e) => {
-                self.status = format!("Error listing remote: {e}");
-            }
+            Err(e) => Err(e),
         }
     }
 
@@ -276,7 +274,10 @@ impl FileManagerScreen {
         sftp: &SftpClient,
     ) -> Result<Outcome> {
         // Initial remote listing
-        self.refresh_remote(sftp);
+        match self.refresh_remote(sftp) {
+            Ok(()) => self.status = format!("Remote: {}", self.remote_path.display()),
+            Err(e) => self.status = format!("Error listing remote: {e}"),
+        }
 
         loop {
             self.draw(terminal)?;
@@ -299,14 +300,17 @@ impl FileManagerScreen {
                                     self.remote_pane.clear_selection();
                                     self.local_files = Self::read_local_dir(&self.local_path)?;
                                     self.local_pane.set_item_count(self.local_files.len());
-                                    self.refresh_remote(sftp);
-                                    self.status = "Transfer complete.".to_string();
+                                    match self.refresh_remote(sftp) {
+                                        Ok(()) => self.status = "Transfer complete.".to_string(),
+                                        Err(e) => self.status = format!("Error listing remote: {e}"),
+                                    }
+                                    self.transfer_queue.clear();
                                 }
                                 Err(e) => {
                                     self.status = format!("Transfer error: {e}");
+                                    self.transfer_queue.clear();
                                 }
                             }
-                            self.transfer_queue.clear();
                         }
                         KeyCode::Esc => {
                             self.show_transfer_dialog = false;
@@ -355,7 +359,10 @@ impl FileManagerScreen {
                                 if let Some(f) = self.remote_files.get(i).cloned() {
                                     if f.is_dir {
                                         self.remote_path = f.path.clone();
-                                        self.refresh_remote(sftp);
+                                        match self.refresh_remote(sftp) {
+                                            Ok(()) => self.status = format!("Remote: {}", self.remote_path.display()),
+                                            Err(e) => self.status = format!("Error listing remote: {e}"),
+                                        }
                                         self.remote_pane.clear_selection();
                                     }
                                 }
@@ -365,12 +372,16 @@ impl FileManagerScreen {
                     KeyCode::Char(' ') => match self.active {
                         ActivePane::Local => {
                             if let Some(i) = self.local_pane.current_index() {
-                                self.local_pane.toggle_selected(i);
+                                if self.local_files.get(i).map(|f| f.name.as_str()) != Some("..") {
+                                    self.local_pane.toggle_selected(i);
+                                }
                             }
                         }
                         ActivePane::Remote => {
                             if let Some(i) = self.remote_pane.current_index() {
-                                self.remote_pane.toggle_selected(i);
+                                if self.remote_files.get(i).map(|f| f.name.as_str()) != Some("..") {
+                                    self.remote_pane.toggle_selected(i);
+                                }
                             }
                         }
                     },

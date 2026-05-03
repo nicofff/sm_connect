@@ -129,7 +129,7 @@ impl FilePane {
         )
         .highlight_symbol(">> ");
 
-        frame.render_stateful_widget(table, area, &mut self.state.clone());
+        frame.render_stateful_widget(table, area, &mut self.state);
     }
 
     fn get_help(&self) -> Table<'_> {
