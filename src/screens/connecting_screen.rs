@@ -93,7 +93,12 @@ impl Screen<Outcome> for ConnectingScreen {
             };
 
             match self.loader.update(msg)? {
-                Some(LoaderOutputAction::Exit) => return Ok(Outcome::Cancelled),
+                Some(LoaderOutputAction::Exit) => {
+                    if let Some(mut child) = self.ssm_child.take() {
+                        let _ = child.kill();
+                    }
+                    return Ok(Outcome::Cancelled);
+                }
                 Some(LoaderOutputAction::Return(Ok((client, _port)))) => {
                     let child = self.ssm_child.take().unwrap();
                     return Ok(Outcome::Connected(client, child));
