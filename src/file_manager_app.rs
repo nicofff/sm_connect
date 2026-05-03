@@ -42,8 +42,6 @@ impl FileManagerApp {
             match screen.run(&mut self.terminal)? {
                 ConnectingOutcome::Connected(client, child) => (client, child),
                 ConnectingOutcome::Failed(msg) => {
-                    // Restore terminal before printing error so it shows correctly
-                    restore_terminal(&mut self.terminal)?;
                     eprintln!("Failed to connect: {msg}");
                     return Ok(());
                 }

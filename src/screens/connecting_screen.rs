@@ -1,6 +1,6 @@
 use std::io::Stdout;
 use std::net::TcpListener;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
@@ -50,6 +50,8 @@ impl ConnectingScreen {
                 "--parameters",
                 &parameters,
             ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .spawn()?;
 
         let (tx, rx) = oneshot::channel();
@@ -96,6 +98,7 @@ impl Screen<Outcome> for ConnectingScreen {
                 Some(LoaderOutputAction::Exit) => {
                     if let Some(mut child) = self.ssm_child.take() {
                         let _ = child.kill();
+                        let _ = child.wait();
                     }
                     return Ok(Outcome::Cancelled);
                 }
@@ -106,11 +109,21 @@ impl Screen<Outcome> for ConnectingScreen {
                 Some(LoaderOutputAction::Return(Err(e))) => {
                     if let Some(mut child) = self.ssm_child.take() {
                         let _ = child.kill();
+                        let _ = child.wait();
                     }
                     return Ok(Outcome::Failed(e.to_string()));
                 }
                 None => {}
             }
+        }
+    }
+}
+
+impl Drop for ConnectingScreen {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.ssm_child.take() {
+            let _ = child.kill();
+            let _ = child.wait();
         }
     }
 }
