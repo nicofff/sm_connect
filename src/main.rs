@@ -29,6 +29,10 @@ struct Args {
     /// Forward SSH port over SSM instead of opening an interactive session
     #[arg(short, long)]
     tunnel: bool,
+
+    /// Open integrated file manager over SSM tunnel
+    #[arg(short, long)]
+    file_manager: bool,
 }
 
 fn pick_local_port() -> Result<u16> {
@@ -48,6 +52,8 @@ async fn main() -> Result<()> {
         let instance = InstanceInfo::new(region, instance_id);
         if args.tunnel {
             tunnel(instance)?;
+        } else if args.file_manager {
+            launch_file_manager(instance)?;
         } else {
             connect(instance)?;
         }
@@ -67,9 +73,7 @@ async fn main() -> Result<()> {
         },
         Ok(Some(UserAction::Connect(instance))) => connect(instance)?,
         Ok(Some(UserAction::Tunnel(instance))) => tunnel(instance)?,
-        Ok(Some(UserAction::FileManager(_instance))) => {
-            eprintln!("File manager not yet implemented");
-        }
+        Ok(Some(UserAction::FileManager(instance))) => launch_file_manager(instance)?,
         Ok(None) => {}
     }
     Ok(())
@@ -109,6 +113,12 @@ fn tunnel(instance: InstanceInfo) -> Result<()> {
         "--parameters",
         &parameters,
     ])
+}
+
+fn launch_file_manager(instance: InstanceInfo) -> Result<()> {
+    // TODO: implemented in a later task
+    println!("File manager launching for instance: {}", instance.get_instance_id());
+    Ok(())
 }
 
 fn connect(instance: InstanceInfo) -> Result<()> {
