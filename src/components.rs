@@ -1,4 +1,5 @@
 pub mod config_list;
+pub mod file_pane;
 pub mod header_tabs;
 pub mod instance_table;
 pub mod loader;
