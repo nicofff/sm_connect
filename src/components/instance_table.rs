@@ -109,7 +109,6 @@ impl InstanceTable {
         let items: Vec<Row> = self
             .visible_items
             .iter()
-            .cloned()
             .map(|i| {
                 Row::new(vec![
                     Cell::from(i.get_name().to_string()),
