@@ -71,7 +71,7 @@ impl ConfigList {
         self.state.selected().map(|i| CONFIG_OPTIONS[i])
     }
 
-    fn get_list(&self) -> List {
+    fn get_list(&self) -> List<'_> {
         let items: Vec<ListItem> = CONFIG_OPTIONS
             .iter()
             .map(|i| {
@@ -91,7 +91,7 @@ impl ConfigList {
             .highlight_symbol(">> ")
     }
 
-    fn get_help(&self) -> Table {
+    fn get_help(&self) -> Table<'_> {
         let rows = vec![Row::new(vec![get_help_styled('q', "Exit")])];
         Table::new(rows, vec![Constraint::Min(10)])
     }

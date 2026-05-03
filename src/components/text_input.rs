@@ -100,7 +100,7 @@ impl TextInput {
         self.search_input = value;
     }
 
-    fn get_widget(&self) -> Paragraph {
+    fn get_widget(&self) -> Paragraph<'_> {
         let text: String = format!("{}{}", self.prompt, self.search_input);
         Paragraph::new(Text::from(text))
     }

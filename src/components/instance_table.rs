@@ -105,7 +105,7 @@ impl InstanceTable {
         self.state.selected().map(|i| self.visible_items[i].clone())
     }
 
-    fn get_table(&self) -> Table {
+    fn get_table(&self) -> Table<'_> {
         let items: Vec<Row> = self
             .visible_items
             .iter()
@@ -147,7 +147,7 @@ impl InstanceTable {
             )
     }
 
-    fn get_help(&self) -> Table {
+    fn get_help(&self) -> Table<'_> {
         let rows = vec![Row::new(vec![
             get_help_styled('q', "Exit"),
             get_help_styled('/', "Search"),
@@ -160,15 +160,15 @@ impl InstanceTable {
                 },
             ),
         ])];
-        let table = Table::new(
+        
+        Table::new(
             rows,
             vec![
                 Constraint::Min(10),
                 Constraint::Min(10),
                 Constraint::Min(10),
             ],
-        );
-        table
+        )
     }
 }
 

@@ -41,11 +41,10 @@ impl RegionList {
 
     fn update_items(&mut self, items: Vec<String>) {
         self.items = items;
-        if let Some(i) = self.state.selected_mut() {
-            if *i >= self.items.len() {
+        if let Some(i) = self.state.selected_mut()
+            && *i >= self.items.len() {
                 *i = self.items.len() - 1;
             }
-        }
         self.sort_list();
     }
 
@@ -130,7 +129,7 @@ impl RegionList {
         self.state.selected().map(|i| self.items[i].clone())
     }
 
-    fn get_list(&self) -> List {
+    fn get_list(&self) -> List<'_> {
         let items: Vec<ListItem> = self
             .items
             .iter()
@@ -156,7 +155,7 @@ impl RegionList {
             .highlight_symbol(">> ")
     }
 
-    fn get_help(&self) -> Table {
+    fn get_help(&self) -> Table<'_> {
         let rows = vec![
             Row::new(vec![
                 get_help_styled('q', "Exit"),

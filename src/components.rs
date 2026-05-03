@@ -22,7 +22,7 @@ pub trait Component {
     fn handle_event(&self, event: Event) -> Option<Self::Message>;
 }
 
-fn get_help_styled(c: char, message: &str) -> Cell {
+fn get_help_styled(c: char, message: &str) -> Cell<'_> {
     let line = Line::from(vec![
         Span::styled(
             format!(" {} ", c.to_string().to_ascii_uppercase()),
