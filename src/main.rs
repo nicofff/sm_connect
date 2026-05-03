@@ -3,6 +3,7 @@ use aws::InstanceInfo;
 mod app;
 mod ui;
 use app::App;
+use std::net::TcpListener;
 use std::process::Command;
 mod components;
 mod history;
@@ -24,6 +25,17 @@ struct Args {
     /// AWS EC2 instance ID (e.g., i-ad53d5e3831ea)
     #[arg(short, long)]
     instance: Option<String>,
+
+    /// Forward SSH port over SSM instead of opening an interactive session
+    #[arg(short, long)]
+    tunnel: bool,
+}
+
+fn pick_local_port() -> Result<u16> {
+    let listener = TcpListener::bind("127.0.0.1:0")?;
+    let port = listener.local_addr()?.port();
+    Ok(port)
+    // listener dropped here, releasing the port
 }
 
 #[tokio::main]
