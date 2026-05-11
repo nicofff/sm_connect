@@ -11,6 +11,7 @@ use std::io::Stdout;
 use anyhow::Result;
 use ratatui::{Terminal, prelude::CrosstermBackend};
 
-pub trait Screen<Outcome> {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome>;
+pub trait Screen {
+    type Outcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Self::Outcome>;
 }

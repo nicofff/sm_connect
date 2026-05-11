@@ -34,7 +34,7 @@ pub struct ConfigScreen {
     last_operation_success: Option<bool>,
 }
 
-pub enum Outcome {
+pub enum ConfigScreenOutcome {
     Exit,
 }
 
@@ -93,8 +93,9 @@ impl ConfigScreen {
     }
 }
 
-impl Screen<Outcome> for ConfigScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for ConfigScreen {
+    type Outcome = ConfigScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Self::Outcome> {
         loop {
             self.draw(terminal)?;
             let event = crossterm::event::read()?;
@@ -102,22 +103,19 @@ impl Screen<Outcome> for ConfigScreen {
                 let message = self.config_list.handle_event(event);
                 let action = self.config_list.update(message)?;
                 match action {
-                    Some(ConfigListOutputAction::Exit) => return Ok(Outcome::Exit),
-                    Some(ConfigListOutputAction::ReturnConfig(option)) => {
-                        match option {
-                            ConfigOption::ResetRecent => {
-                                History::reset().context("Failed to reset history")?;
-                                self.last_operation_success = Some(true);
-                            }
-                            ConfigOption::SetRecentTimeout => {
-                                self.modifying_action = Some(ConfigOption::SetRecentTimeout);
-                                self.input_active = true;
-                                let current_value =
-                                    self.config.lock().unwrap().get_recent_timeout();
-                                self.input_component.set_value(current_value.to_string());
-                            }
+                    Some(ConfigListOutputAction::Exit) => return Ok(Self::Outcome::Exit),
+                    Some(ConfigListOutputAction::ReturnConfig(option)) => match option {
+                        ConfigOption::ResetRecent => {
+                            History::reset().context("Failed to reset history")?;
+                            self.last_operation_success = Some(true);
                         }
-                    }
+                        ConfigOption::SetRecentTimeout => {
+                            self.modifying_action = Some(ConfigOption::SetRecentTimeout);
+                            self.input_active = true;
+                            let current_value = self.config.lock().unwrap().get_recent_timeout();
+                            self.input_component.set_value(current_value.to_string());
+                        }
+                    },
                     None => {
                         self.last_operation_success = None;
                     }

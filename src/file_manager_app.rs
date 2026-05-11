@@ -8,9 +8,9 @@ use ratatui::prelude::CrosstermBackend;
 
 use crate::aws::InstanceInfo;
 use crate::screens::Screen;
-use crate::screens::connecting_screen::{ConnectingScreen, Outcome as ConnectingOutcome};
+use crate::screens::connecting_screen::{ConnectingScreen, ConnectingScreenOutcome as ConnectingOutcome};
 use crate::screens::file_manager_screen::FileManagerScreen;
-use crate::screens::username_prompt_screen::{UsernamePromptScreen, Outcome as UsernameOutcome};
+use crate::screens::username_prompt_screen::{UsernamePromptScreen, UsernamePromptScreenOutcome as UsernameOutcome};
 use anyhow::anyhow;
 use crate::ui::{restore_terminal, setup_terminal};
 

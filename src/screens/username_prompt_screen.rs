@@ -18,7 +18,7 @@ pub struct UsernamePromptScreen {
     input: TextInput,
 }
 
-pub enum Outcome {
+pub enum UsernamePromptScreenOutcome {
     Username(String),
     Cancel,
 }
@@ -78,8 +78,9 @@ impl UsernamePromptScreen {
     }
 }
 
-impl Screen<Outcome> for UsernamePromptScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for UsernamePromptScreen {
+    type Outcome = UsernamePromptScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<UsernamePromptScreenOutcome> {
         loop {
             self.draw(terminal)?;
             let event = event::read()?;
@@ -88,10 +89,10 @@ impl Screen<Outcome> for UsernamePromptScreen {
                 Some(TextInputOutputAction::Return(value)) => {
                     let trimmed = value.trim().to_string();
                     if !trimmed.is_empty() {
-                        return Ok(Outcome::Username(trimmed));
+                        return Ok(UsernamePromptScreenOutcome::Username(trimmed));
                     }
                 }
-                Some(TextInputOutputAction::Exit) => return Ok(Outcome::Cancel),
+                Some(TextInputOutputAction::Exit) => return Ok(UsernamePromptScreenOutcome::Cancel),
                 _ => {}
             }
         }

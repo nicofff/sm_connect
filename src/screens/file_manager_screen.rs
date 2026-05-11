@@ -48,7 +48,7 @@ pub struct FileManagerScreen {
     status: String,
 }
 
-pub enum Outcome {
+pub enum FileManagerScreenOutcome {
     Quit,
 }
 
@@ -272,7 +272,7 @@ impl FileManagerScreen {
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<Stdout>>,
         sftp: &SftpClient,
-    ) -> Result<Outcome> {
+    ) -> Result<FileManagerScreenOutcome> {
         // Initial remote listing
         match self.refresh_remote(sftp) {
             Ok(()) => self.status = format!("Remote: {}", self.remote_path.display()),
@@ -324,7 +324,7 @@ impl FileManagerScreen {
 
             if let Event::Key(key) = &ev {
                 match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(Outcome::Quit),
+                    KeyCode::Char('q') | KeyCode::Esc => return Ok(FileManagerScreenOutcome::Quit),
                     KeyCode::Tab => {
                         self.active = match self.active {
                             ActivePane::Local => ActivePane::Remote,
@@ -386,8 +386,9 @@ impl FileManagerScreen {
     }
 }
 
-impl Screen<Outcome> for FileManagerScreen {
-    fn run(&mut self, _terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
-        Ok(Outcome::Quit)
+impl Screen for FileManagerScreen {
+    type Outcome = FileManagerScreenOutcome;
+    fn run(&mut self, _terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<FileManagerScreenOutcome> {
+        Ok(FileManagerScreenOutcome::Quit)
     }
 }

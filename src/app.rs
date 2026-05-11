@@ -64,21 +64,21 @@ impl App {
             match self.selected_screen.clone() {
                 SelectedScreen::RegionSelect => {
                     match self.region_select_screen.run(&mut self.terminal)? {
-                        region_select_screen::Outcome::Exit => should_exit = true,
-                        region_select_screen::Outcome::RegionSelected(region) => {
+                        region_select_screen::RegionSelectScreenOutcome::Exit => should_exit = true,
+                        region_select_screen::RegionSelectScreenOutcome::RegionSelected(region) => {
                             self.selected_screen = SelectedScreen::LoadingInstances(region);
                         }
-                        region_select_screen::Outcome::OpenConfig => {
+                        region_select_screen::RegionSelectScreenOutcome::OpenConfig => {
                             self.selected_screen = SelectedScreen::Config;
                         }
                     }
                 }
                 SelectedScreen::LoadingInstances(region) => {
                     match LoadingInstancesScreen::new(region).run(&mut self.terminal)? {
-                        loading_instances_screen::Outcome::Cancelled => {
+                        loading_instances_screen::LoadingInstancesScreenOutcome::Cancelled => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
-                        loading_instances_screen::Outcome::InstancesFetched(instances) => {
+                        loading_instances_screen::LoadingInstancesScreenOutcome::InstancesFetched(instances) => {
                             self.instance_selection_screen.set_instances(instances);
                             self.selected_screen = SelectedScreen::InstanceSelect;
                         }
@@ -86,22 +86,22 @@ impl App {
                 }
                 SelectedScreen::InstanceSelect => {
                     match self.instance_selection_screen.run(&mut self.terminal)? {
-                        crate::screens::instance_select_screen::Outcome::Exit => {
+                        crate::screens::instance_select_screen::InstanceSelectScreenOutcome::Exit => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
-                        crate::screens::instance_select_screen::Outcome::Connect(
+                        crate::screens::instance_select_screen::InstanceSelectScreenOutcome::Connect(
                             instance_info,
                         ) => {
                             should_exit = true;
                             return_value = Some(UserAction::Connect(instance_info));
                         }
-                        crate::screens::instance_select_screen::Outcome::Tunnel(
+                        crate::screens::instance_select_screen::InstanceSelectScreenOutcome::Tunnel(
                             instance_info,
                         ) => {
                             should_exit = true;
                             return_value = Some(UserAction::Tunnel(instance_info));
                         }
-                        crate::screens::instance_select_screen::Outcome::FileManager(
+                        crate::screens::instance_select_screen::InstanceSelectScreenOutcome::FileManager(
                             instance_info,
                         ) => {
                             should_exit = true;
@@ -110,7 +110,7 @@ impl App {
                     }
                 }
                 SelectedScreen::Config => match self.config_screen.run(&mut self.terminal)? {
-                    crate::screens::config_screen::Outcome::Exit => {
+                    crate::screens::config_screen::ConfigScreenOutcome::Exit => {
                         self.selected_screen = SelectedScreen::RegionSelect;
                     }
                 },

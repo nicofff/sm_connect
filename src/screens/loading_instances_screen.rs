@@ -18,7 +18,7 @@ pub struct LoadingInstancesScreen {
     loader: Loader<FetchResult>,
 }
 
-pub enum Outcome {
+pub enum LoadingInstancesScreenOutcome {
     Cancelled,
     InstancesFetched(Vec<InstanceInfo>),
 }
@@ -36,8 +36,9 @@ impl LoadingInstancesScreen {
     }
 }
 
-impl Screen<Outcome> for LoadingInstancesScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for LoadingInstancesScreen {
+    type Outcome = LoadingInstancesScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<LoadingInstancesScreenOutcome> {
         loop {
             terminal.draw(|frame| self.loader.view(frame, frame.area()))?;
             let message = if event::poll(Duration::from_millis(50))? {
@@ -48,9 +49,9 @@ impl Screen<Outcome> for LoadingInstancesScreen {
             let action = self.loader.update(message)
                 .context("Unexpected error while fetching instances")?;
             match action {
-                Some(LoaderOutputAction::Exit) => return Ok(Outcome::Cancelled),
+                Some(LoaderOutputAction::Exit) => return Ok(LoadingInstancesScreenOutcome::Cancelled),
                 Some(LoaderOutputAction::Return(data)) => {
-                    return Ok(Outcome::InstancesFetched(
+                    return Ok(LoadingInstancesScreenOutcome::InstancesFetched(
                         data.context("Failed to fetch instances. Check your AWS credentials.")?,
                     ))
                 }

@@ -28,7 +28,7 @@ pub struct InstanceSelectScreen {
     search_active: bool,
 }
 
-pub enum Outcome {
+pub enum InstanceSelectScreenOutcome {
     Exit,
     Connect(InstanceInfo),
     Tunnel(InstanceInfo),
@@ -77,8 +77,9 @@ impl InstanceSelectScreen {
     }
 }
 
-impl Screen<Outcome> for InstanceSelectScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for InstanceSelectScreen {
+    type Outcome = InstanceSelectScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<InstanceSelectScreenOutcome> {
         loop {
             self.draw(terminal)?;
             let event = event::read()?;
@@ -86,15 +87,15 @@ impl Screen<Outcome> for InstanceSelectScreen {
                 let message = self.instance_table_component.handle_event(event);
                 let action = self.instance_table_component.update(message)?;
                 match action {
-                    Some(InstanceTableOutputAction::Exit) => return Ok(Outcome::Exit),
+                    Some(InstanceTableOutputAction::Exit) => return Ok(InstanceSelectScreenOutcome::Exit),
                     Some(InstanceTableOutputAction::ReturnInstance(instance)) => {
-                        return Ok(Outcome::Connect(instance));
+                        return Ok(InstanceSelectScreenOutcome::Connect(instance));
                     }
                     Some(InstanceTableOutputAction::ReturnInstanceForTunnel(instance)) => {
-                        return Ok(Outcome::Tunnel(instance));
+                        return Ok(InstanceSelectScreenOutcome::Tunnel(instance));
                     }
                     Some(InstanceTableOutputAction::ReturnInstanceForFileManager(instance)) => {
-                        return Ok(Outcome::FileManager(instance));
+                        return Ok(InstanceSelectScreenOutcome::FileManager(instance));
                     }
                     Some(InstanceTableOutputAction::Search) => {
                         self.search_active = true;

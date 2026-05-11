@@ -8,17 +8,20 @@ use crossterm::event;
 use ratatui::{Terminal, prelude::CrosstermBackend};
 use tokio::sync::oneshot;
 
-use crate::aws::InstanceInfo;
-use crate::components::{Component, loader::{Loader, LoaderOutputAction}};
-use crate::sftp::SftpClient;
 use super::Screen;
+use crate::aws::InstanceInfo;
+use crate::components::{
+    Component,
+    loader::{Loader, LoaderOutputAction},
+};
+use crate::sftp::SftpClient;
 
 pub struct ConnectingScreen {
     loader: Loader<Result<(SftpClient, u16)>>,
     ssm_child: Option<Child>,
 }
 
-pub enum Outcome {
+pub enum ConnectingScreenOutcome {
     Connected(SftpClient, Child),
     Failed(String),
     Cancelled,
@@ -33,9 +36,7 @@ impl ConnectingScreen {
     pub fn new(instance: InstanceInfo, username: String) -> Result<Self> {
         let local_port = pick_local_port()?;
         let local_port_str = local_port.to_string();
-        let parameters = format!(
-            r#"{{"portNumber":["22"],"localPortNumber":["{local_port}"]}}"#
-        );
+        let parameters = format!(r#"{{"portNumber":["22"],"localPortNumber":["{local_port}"]}}"#);
 
         let ssm_child = Command::new("aws")
             .args([
@@ -83,8 +84,9 @@ impl ConnectingScreen {
     }
 }
 
-impl Screen<Outcome> for ConnectingScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for ConnectingScreen {
+    type Outcome = ConnectingScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Self::Outcome> {
         loop {
             terminal.draw(|frame| self.loader.view(frame, frame.area()))?;
 
@@ -100,18 +102,18 @@ impl Screen<Outcome> for ConnectingScreen {
                         let _ = child.kill();
                         let _ = child.wait();
                     }
-                    return Ok(Outcome::Cancelled);
+                    return Ok(Self::Outcome::Cancelled);
                 }
                 Some(LoaderOutputAction::Return(Ok((client, _port)))) => {
                     let child = self.ssm_child.take().unwrap();
-                    return Ok(Outcome::Connected(client, child));
+                    return Ok(Self::Outcome::Connected(client, child));
                 }
                 Some(LoaderOutputAction::Return(Err(e))) => {
                     if let Some(mut child) = self.ssm_child.take() {
                         let _ = child.kill();
                         let _ = child.wait();
                     }
-                    return Ok(Outcome::Failed(e.to_string()));
+                    return Ok(Self::Outcome::Failed(e.to_string()));
                 }
                 None => {}
             }

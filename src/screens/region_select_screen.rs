@@ -29,7 +29,7 @@ pub struct RegionSelectScreen {
     region_select_component: RegionList,
 }
 
-pub enum Outcome {
+pub enum RegionSelectScreenOutcome {
     Exit,
     OpenConfig,
     RegionSelected(String),
@@ -47,8 +47,9 @@ impl RegionSelectScreen {
     }
 }
 
-impl Screen<Outcome> for RegionSelectScreen {
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<Outcome> {
+impl Screen for RegionSelectScreen {
+    type Outcome = RegionSelectScreenOutcome;
+    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<RegionSelectScreenOutcome> {
         loop {
             terminal.draw(|frame| {
                 let layout = Layout::default()
@@ -65,9 +66,9 @@ impl Screen<Outcome> for RegionSelectScreen {
                 None
             };
             match self.region_select_component.update(message)? {
-                Some(RegionListOutputAction::Exit) => return Ok(Outcome::Exit),
-                Some(RegionListOutputAction::Return(region)) => return Ok(Outcome::RegionSelected(region)),
-                Some(RegionListOutputAction::OpenConfig) => return Ok(Outcome::OpenConfig),
+                Some(RegionListOutputAction::Exit) => return Ok(RegionSelectScreenOutcome::Exit),
+                Some(RegionListOutputAction::Return(region)) => return Ok(RegionSelectScreenOutcome::RegionSelected(region)),
+                Some(RegionListOutputAction::OpenConfig) => return Ok(RegionSelectScreenOutcome::OpenConfig),
                 None => {}
             }
         }
