@@ -157,6 +157,9 @@ pub enum TaskTableMessage {
     Search,
 }
 
+// Short-lived outcome enum built and matched immediately, so the size spread
+// between the data and unit variants does not matter (mirrors the EC2 outcome enums).
+#[allow(clippy::large_enum_variant)]
 pub enum TaskTableOutputAction {
     Exit,
     ReturnTask(EcsTaskInfo),
