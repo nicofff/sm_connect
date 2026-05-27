@@ -219,8 +219,21 @@ pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
         .await;
     let client = aws_sdk_ecs::Client::new(&config);
 
-    let clusters = client.list_clusters().send().await?;
-    let cluster_arns = clusters.cluster_arns.unwrap_or_default();
+    // Enumerate clusters, following pagination (ListClusters returns <=100 per page).
+    let mut cluster_arns: Vec<String> = Vec::new();
+    let mut clusters_token: Option<String> = None;
+    loop {
+        let resp = client
+            .list_clusters()
+            .set_next_token(clusters_token)
+            .send()
+            .await?;
+        cluster_arns.extend(resp.cluster_arns.unwrap_or_default());
+        clusters_token = resp.next_token;
+        if clusters_token.is_none() {
+            break;
+        }
+    }
 
     let mut tasks: Vec<EcsTaskInfo> = Vec::new();
 
@@ -251,6 +264,8 @@ pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
                 .set_tasks(Some(chunk.to_vec()))
                 .send()
                 .await?;
+            // `described.failures` is intentionally ignored: a task that stopped
+            // between list_tasks and describe_tasks simply won't appear in the list.
             for task in described.tasks.unwrap_or_default() {
                 let task_arn = task.task_arn.clone().unwrap_or_default();
                 let task_definition_arn = task.task_definition_arn.clone().unwrap_or_default();
