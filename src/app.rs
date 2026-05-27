@@ -18,6 +18,7 @@ use anyhow::Context;
 use ratatui::prelude::*;
 
 use std::io::Stdout;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
@@ -51,6 +52,7 @@ pub struct App {
     task_select_screen: TaskSelectScreen,
     selected_task: Option<EcsTaskInfo>,
     config_screen: ConfigScreen,
+    config: Arc<Mutex<config::Config>>,
 }
 
 impl App {
@@ -69,6 +71,7 @@ impl App {
             task_select_screen,
             selected_task: None,
             config_screen,
+            config,
         })
     }
 
@@ -81,7 +84,16 @@ impl App {
                     match self.region_select_screen.run(&mut self.terminal)? {
                         region_select_screen::RegionSelectScreenOutcome::Exit => should_exit = true,
                         region_select_screen::RegionSelectScreenOutcome::RegionSelected(region) => {
-                            self.selected_screen = SelectedScreen::ModeSelect(region);
+                            let (ec2, ecs) = {
+                                let cfg = self.config.lock().unwrap();
+                                (cfg.is_ec2_enabled(), cfg.is_ecs_enabled())
+                            };
+                            self.selected_screen = match (ec2, ecs) {
+                                (true, false) => SelectedScreen::LoadingInstances(region),
+                                (false, true) => SelectedScreen::LoadingTasks(region),
+                                // both enabled (and the impossible both-disabled) -> show the picker
+                                _ => SelectedScreen::ModeSelect(region),
+                            };
                         }
                         region_select_screen::RegionSelectScreenOutcome::OpenConfig => {
                             self.selected_screen = SelectedScreen::Config;
@@ -91,7 +103,7 @@ impl App {
                 SelectedScreen::LoadingInstances(region) => {
                     match LoadingInstancesScreen::new(region.clone()).run(&mut self.terminal)? {
                         loading_instances_screen::LoadingInstancesScreenOutcome::Cancelled => {
-                            self.selected_screen = SelectedScreen::ModeSelect(region);
+                            self.selected_screen = SelectedScreen::RegionSelect;
                         }
                         loading_instances_screen::LoadingInstancesScreenOutcome::InstancesFetched(instances) => {
                             self.instance_selection_screen.set_instances(instances);
@@ -140,7 +152,7 @@ impl App {
                 SelectedScreen::LoadingTasks(region) => {
                     match LoadingTasksScreen::new(region.clone()).run(&mut self.terminal)? {
                         LoadingTasksScreenOutcome::Cancelled => {
-                            self.selected_screen = SelectedScreen::ModeSelect(region);
+                            self.selected_screen = SelectedScreen::RegionSelect;
                         }
                         LoadingTasksScreenOutcome::TasksFetched(tasks) => {
                             self.task_select_screen.set_tasks(tasks);
