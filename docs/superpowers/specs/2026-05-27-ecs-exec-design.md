@@ -38,7 +38,8 @@ New struct:
 ```rust
 pub struct EcsTaskInfo {
     region: Region,
-    cluster: String,          // cluster name or ARN (whatever execute-command accepts)
+    cluster: String,          // cluster name or ARN (whatever execute-command accepts);
+                              //   the Cluster column displays the short name parsed from the ARN
     task_id: String,          // short id for display
     task_arn: String,         // passed to --task
     task_definition: String,  // family:revision, for display
@@ -78,7 +79,7 @@ Uses `aws-sdk-ecs` (new dependency, sibling to the existing `aws-sdk-ec2`).
 
 ## New components (`src/components/`)
 
-- **`task_table.rs`** — modeled on `instance_table.rs`. Columns: Task ID,
+- **`task_table.rs`** — modeled on `instance_table.rs`. Columns: Cluster, Task ID,
   Task Definition, Service, Status, Containers (count). Searchable/filterable across
   those fields like the instance table. Output action: `ReturnTask(EcsTaskInfo)`,
   plus `Search` / `Exit` to match the instance table's interaction model.
