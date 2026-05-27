@@ -193,9 +193,9 @@ impl Config {
         self.recent_timeout
     }
     #[allow(dead_code)]
-    pub fn set_recent_timeout(&mut self, timeout: u64) -> Result<()> {
+    pub fn set_recent_timeout(&mut self, timeout: u64) {
+        // In-memory only; the config menu persists once on exit.
         self.recent_timeout = timeout;
-        self.persist()
     }
 
     pub fn is_ec2_enabled(&self) -> bool {
@@ -206,26 +206,16 @@ impl Config {
         self.ecs_enabled
     }
 
-    /// Flips the EC2 flag and persists. If the write is rejected (would leave no
-    /// enabled mode), the flip is reverted and the error propagated.
-    pub fn toggle_ec2(&mut self) -> Result<()> {
+    /// Flips the EC2 flag in memory. Both modes may be off transiently while the
+    /// user reorganizes; the "at least one enabled" invariant is enforced on
+    /// persist (the config menu persists on exit).
+    pub fn toggle_ec2(&mut self) {
         self.ec2_enabled = !self.ec2_enabled;
-        if let Err(e) = self.persist() {
-            self.ec2_enabled = !self.ec2_enabled;
-            return Err(e);
-        }
-        Ok(())
     }
 
-    /// Flips the ECS flag and persists. If the write is rejected (would leave no
-    /// enabled mode), the flip is reverted and the error propagated.
-    pub fn toggle_ecs(&mut self) -> Result<()> {
+    /// Flips the ECS flag in memory. See `toggle_ec2` for why this can't fail.
+    pub fn toggle_ecs(&mut self) {
         self.ecs_enabled = !self.ecs_enabled;
-        if let Err(e) = self.persist() {
-            self.ecs_enabled = !self.ecs_enabled;
-            return Err(e);
-        }
-        Ok(())
     }
 
     /// Repairs a hand-edited config that disabled both modes by re-enabling both.
@@ -255,12 +245,14 @@ mod tests {
     }
 
     #[test]
-    fn toggle_refuses_to_disable_last_mode_and_reverts() {
+    fn toggles_can_leave_both_modes_off_in_memory() {
         let mut c = Config::default();
-        c.ecs_enabled = false; // only EC2 left enabled (direct set, no IO)
-        let result = c.toggle_ec2(); // would disable the last mode
-        assert!(result.is_err());
-        assert!(c.is_ec2_enabled()); // reverted in memory
+        c.toggle_ec2(); // ec2 off, ecs still on
+        c.toggle_ecs(); // both off — allowed transiently
+        assert!(!c.is_ec2_enabled());
+        assert!(!c.is_ecs_enabled());
+        // The invariant is enforced only on persist, not on the toggle.
+        assert!(c.ensure_valid().is_err());
     }
 
     #[test]

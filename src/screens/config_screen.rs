@@ -31,7 +31,14 @@ pub struct ConfigScreen {
     input_component: TextInput,
     input_active: bool,
     modifying_action: Option<ConfigOption>,
-    last_operation_success: Option<bool>,
+    feedback: OperationFeedback,
+}
+
+/// Banner state shown at the bottom of the config screen.
+enum OperationFeedback {
+    None,
+    Success,
+    Failure(String),
 }
 
 pub enum ConfigScreenOutcome {
@@ -48,7 +55,7 @@ impl ConfigScreen {
             input_component,
             input_active: false,
             modifying_action: None,
-            last_operation_success: None,
+            feedback: OperationFeedback::None,
         }
     }
 
@@ -69,8 +76,8 @@ impl ConfigScreen {
                 self.input_component.view(frame, overlay_layout[1]);
             }
 
-            match self.last_operation_success {
-                Some(true) => {
+            match &self.feedback {
+                OperationFeedback::Success => {
                     let line = Paragraph::new(Text::from("Operation successful"))
                         .centered()
                         .bg(Color::Green)
@@ -78,15 +85,15 @@ impl ConfigScreen {
                     frame.render_widget(Clear, overlay_layout[1]);
                     frame.render_widget(line, overlay_layout[1]);
                 }
-                Some(false) => {
-                    let line = Paragraph::new(Text::from("Operation failed"))
+                OperationFeedback::Failure(message) => {
+                    let line = Paragraph::new(Text::from(message.clone()))
                         .centered()
                         .bg(Color::Red)
                         .block(Block::default().borders(Borders::ALL));
                     frame.render_widget(Clear, overlay_layout[1]);
                     frame.render_widget(line, overlay_layout[1]);
                 }
-                None => {}
+                OperationFeedback::None => {}
             }
         })?;
         Ok(())
@@ -103,11 +110,19 @@ impl Screen for ConfigScreen {
                 let message = self.config_list.handle_event(event);
                 let action = self.config_list.update(message)?;
                 match action {
-                    Some(ConfigListOutputAction::Exit) => return Ok(Self::Outcome::Exit),
+                    Some(ConfigListOutputAction::Exit) => {
+                        // Persist on exit. The persist gate rejects a both-modes-off
+                        // state, so leaving is blocked (banner shown) until the user
+                        // re-enables a mode. Any IO error surfaces the same way.
+                        match self.config.lock().unwrap().persist() {
+                            Ok(()) => return Ok(Self::Outcome::Exit),
+                            Err(e) => self.feedback = OperationFeedback::Failure(e.to_string()),
+                        }
+                    }
                     Some(ConfigListOutputAction::ReturnConfig(option)) => match option {
                         ConfigOption::ResetRecent => {
                             History::reset().context("Failed to reset history")?;
-                            self.last_operation_success = Some(true);
+                            self.feedback = OperationFeedback::Success;
                         }
                         ConfigOption::SetRecentTimeout => {
                             self.modifying_action = Some(ConfigOption::SetRecentTimeout);
@@ -116,23 +131,18 @@ impl Screen for ConfigScreen {
                             self.input_component.set_value(current_value.to_string());
                         }
                         ConfigOption::ToggleEc2 => {
-                            // Success is silent (the list label flips); a refused
-                            // toggle (would disable the last mode) shows the failure banner.
-                            match self.config.lock().unwrap().toggle_ec2() {
-                                Ok(()) => self.last_operation_success = None,
-                                Err(_) => self.last_operation_success = Some(false),
-                            }
+                            // Toggling can't fail; both modes may be off transiently
+                            // (enforced on exit). Clear any stale banner.
+                            self.config.lock().unwrap().toggle_ec2();
+                            self.feedback = OperationFeedback::None;
                         }
                         ConfigOption::ToggleEcs => {
-                            // Same silent-success / banner-on-refusal handling as ToggleEc2.
-                            match self.config.lock().unwrap().toggle_ecs() {
-                                Ok(()) => self.last_operation_success = None,
-                                Err(_) => self.last_operation_success = Some(false),
-                            }
+                            self.config.lock().unwrap().toggle_ecs();
+                            self.feedback = OperationFeedback::None;
                         }
                     },
                     None => {
-                        self.last_operation_success = None;
+                        self.feedback = OperationFeedback::None;
                     }
                 }
             } else {
@@ -145,10 +155,12 @@ impl Screen for ConfigScreen {
                     Some(TextInputOutputAction::Return(search)) => {
                         if let Some(ConfigOption::SetRecentTimeout) = self.modifying_action {
                             if let Ok(timeout) = search.parse::<u64>() {
-                                self.config.lock().unwrap().set_recent_timeout(timeout)?;
-                                self.last_operation_success = Some(true);
+                                self.config.lock().unwrap().set_recent_timeout(timeout);
+                                self.feedback = OperationFeedback::Success;
                             } else {
-                                self.last_operation_success = Some(false);
+                                self.feedback = OperationFeedback::Failure(
+                                    "Timeout must be a whole number of seconds".to_string(),
+                                );
                             }
                         }
                         self.input_active = false;
