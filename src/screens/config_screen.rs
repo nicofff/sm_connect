@@ -124,6 +124,7 @@ impl Screen for ConfigScreen {
                             }
                         }
                         ConfigOption::ToggleEcs => {
+                            // Same silent-success / banner-on-refusal handling as ToggleEc2.
                             match self.config.lock().unwrap().toggle_ecs() {
                                 Ok(()) => self.last_operation_success = None,
                                 Err(_) => self.last_operation_success = Some(false),
