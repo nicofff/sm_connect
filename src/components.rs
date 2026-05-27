@@ -4,6 +4,7 @@ pub mod header_tabs;
 pub mod instance_table;
 pub mod loader;
 pub mod region_list;
+pub mod simple_list;
 pub mod text_input;
 use anyhow::Result;
 use crossterm::event::Event;
