@@ -143,7 +143,7 @@ impl EcsTaskInfo {
         &self.cluster
     }
 
-    pub fn cluster_name(&self) -> &str {
+    pub fn get_cluster_name(&self) -> &str {
         &self.cluster_name
     }
 
@@ -244,7 +244,7 @@ mod tests {
             "RUNNING".to_string(),
             vec!["app".to_string(), "sidecar".to_string()],
         );
-        assert_eq!(task.cluster_name(), "prod");
+        assert_eq!(task.get_cluster_name(), "prod");
         assert_eq!(task.get_task_id(), "deadbeef");
         assert_eq!(task.get_task_definition(), "web:7");
         assert_eq!(task.get_service(), "web-api");
