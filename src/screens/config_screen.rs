@@ -40,7 +40,7 @@ pub enum ConfigScreenOutcome {
 
 impl ConfigScreen {
     pub fn new(config: Arc<Mutex<Config>>) -> Self {
-        let config_list = ConfigList::new();
+        let config_list = ConfigList::new(config.clone());
         let input_component = TextInput::new("Value: ".to_string());
         Self {
             config,
@@ -114,6 +114,20 @@ impl Screen for ConfigScreen {
                             self.input_active = true;
                             let current_value = self.config.lock().unwrap().get_recent_timeout();
                             self.input_component.set_value(current_value.to_string());
+                        }
+                        ConfigOption::ToggleEc2 => {
+                            // Success is silent (the list label flips); a refused
+                            // toggle (would disable the last mode) shows the failure banner.
+                            match self.config.lock().unwrap().toggle_ec2() {
+                                Ok(()) => self.last_operation_success = None,
+                                Err(_) => self.last_operation_success = Some(false),
+                            }
+                        }
+                        ConfigOption::ToggleEcs => {
+                            match self.config.lock().unwrap().toggle_ecs() {
+                                Ok(()) => self.last_operation_success = None,
+                                Err(_) => self.last_operation_success = Some(false),
+                            }
                         }
                     },
                     None => {
