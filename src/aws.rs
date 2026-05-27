@@ -219,41 +219,27 @@ pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
         .await;
     let client = aws_sdk_ecs::Client::new(&config);
 
-    // Enumerate clusters, following pagination (ListClusters returns <=100 per page).
+    // Enumerate clusters across all pages via the SDK paginator.
     let mut cluster_arns: Vec<String> = Vec::new();
-    let mut clusters_token: Option<String> = None;
-    loop {
-        let resp = client
-            .list_clusters()
-            .set_next_token(clusters_token)
-            .send()
-            .await?;
-        cluster_arns.extend(resp.cluster_arns.unwrap_or_default());
-        clusters_token = resp.next_token;
-        if clusters_token.is_none() {
-            break;
-        }
+    let mut cluster_pages = client.list_clusters().into_paginator().items().send();
+    while let Some(cluster_arn) = cluster_pages.next().await {
+        cluster_arns.push(cluster_arn?);
     }
 
     let mut tasks: Vec<EcsTaskInfo> = Vec::new();
 
     for cluster_arn in cluster_arns {
-        // Collect RUNNING task ARNs for this cluster, following pagination.
+        // Collect RUNNING task ARNs for this cluster across all pages.
         let mut task_arns: Vec<String> = Vec::new();
-        let mut next_token: Option<String> = None;
-        loop {
-            let resp = client
-                .list_tasks()
-                .cluster(&cluster_arn)
-                .desired_status(DesiredStatus::Running)
-                .set_next_token(next_token)
-                .send()
-                .await?;
-            task_arns.extend(resp.task_arns.unwrap_or_default());
-            next_token = resp.next_token;
-            if next_token.is_none() {
-                break;
-            }
+        let mut task_pages = client
+            .list_tasks()
+            .cluster(&cluster_arn)
+            .desired_status(DesiredStatus::Running)
+            .into_paginator()
+            .items()
+            .send();
+        while let Some(task_arn) = task_pages.next().await {
+            task_arns.push(task_arn?);
         }
 
         // describe_tasks accepts at most 100 task ARNs per call.
