@@ -65,10 +65,12 @@ impl TaskSelectScreen {
                     .direction(ratatui::layout::Direction::Vertical)
                     .constraints(vec![Constraint::Fill(1), Constraint::Max(3)])
                     .split(layout[1]);
-                frame.render_widget(Clear, search_layout[1]);
+                frame.render_widget(Clear, search_layout[1]); //this clears out the background
+                //TODO: Since we are drawing on top, maybe give it some distinct style?
                 self.search_component.view(frame, search_layout[1]);
             }
         })?;
+
         Ok(())
     }
 }
@@ -100,6 +102,8 @@ impl Screen for TaskSelectScreen {
                 let action = self.search_component.update(message)?;
                 match action {
                     Some(TextInputOutputAction::Exit) => {
+                        // Search text is intentionally kept so reopening (`/`) resumes
+                        // the previous query; matches instance_select_screen behavior.
                         self.search_active = false;
                     }
                     Some(TextInputOutputAction::Return(search)) => {
