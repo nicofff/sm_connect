@@ -107,10 +107,17 @@ the existing `run_aws_command` helper (so SIGINT/SIGTSTP pass-through still work
 ## Header (`src/components/header_tabs.rs`)
 
 The header "tabs" are really a flow/progress indicator, not interactive tabs. Make
-`HeaderTabs` accept its tab set so the ECS path shows its own steps
-(`Region / Mode / Tasks / Container`) while EC2 keeps `Region / Instances / Connection`.
-Two existing call sites (`region_select_screen`, `instance_select_screen`) are updated
-to pass their tab set.
+`HeaderTabs` accept its tab set so different screens can show different steps.
+
+- **ModeSelect** keeps the existing EC2 tab set (`Region / Instances / Connection`) —
+  no change to its appearance at the branch point.
+- The **ECS screens** (LoadingTasks / TaskSelect / ContainerSelect) switch to an
+  ECS-appropriate set (`Region / Tasks / Container`).
+
+This is an interim decision: the header's role as a progress indicator across two
+diverging flows is unresolved and **flagged for future revisiting**. Two existing call
+sites (`region_select_screen`, `instance_select_screen`) are updated to pass their tab
+set.
 
 ## Error handling
 
