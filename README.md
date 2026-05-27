@@ -1,7 +1,7 @@
 Session Manager Connect
 =======================
 
-Session Manager Connect is a TUI to simplify using AWS Systems Manager's Session Manager to connect to EC2 instances
+Session Manager Connect is a TUI to simplify using AWS Systems Manager's Session Manager to connect to EC2 instances. It also supports Exec'ing into ECS tasks
 
 ![Demo](docs/demo.gif)
 
