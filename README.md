@@ -45,9 +45,10 @@ sm_connect
 ```
 
 1. The `sm_connect` TUI will launch.
-1. Select the __region__ that contains your instance.
-2. Select the __instance__ you want to connect to.
-4. __Connect__ and enjoy!
+1. Select the __region__ that contains your instance or task.
+1. Choose a __mode__: EC2 (Session Manager) or ECS (Exec).
+1. For EC2: select the __instance__ and __connect__.
+1. For ECS: select a __task__, then a __container__ (skipped if the task has only one), and a shell opens via `aws ecs execute-command`.
 
 ## Command-line Arguments
 
@@ -121,6 +122,23 @@ You will be prompted for the SSH username. After connecting, a dual-pane file ma
 
 > **Prerequisites:** SSH must be running on the instance (port 22). `ssh-agent` must be running locally with the correct key: `eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_rsa`
 
+## ECS Exec Mode
+
+After selecting a region, choose **ECS (Exec)** to browse running ECS tasks across all
+clusters in the region. Pick a task, then a container, and `sm_connect` opens an
+interactive `/bin/sh` shell in that container via `aws ecs execute-command`. If a task
+has a single container, the container step is skipped.
+
+> **Prerequisites:**
+> - The [Session Manager plugin][aws-sm-install] must be installed (same as EC2 mode).
+> - The task's service/task must be launched with **ECS Exec enabled**
+>   (`enableExecuteCommand`).
+> - The task role must grant the SSM permissions ECS Exec requires
+>   (`ssmmessages:*`).
+>
+> See the [ECS Exec documentation][ecs-exec] for setup details.
+
 [aws-cli-install]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 [aws-sm-install]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 [aws-sm-config]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started.html
+[ecs-exec]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec-run.html
