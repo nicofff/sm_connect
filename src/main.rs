@@ -138,6 +138,7 @@ fn ecs_exec(task: aws::EcsTaskInfo, container: String) -> Result<()> {
         &container,
         "--interactive",
         "--command",
+        // v1: shell is hardcoded; making this configurable is a deliberate future step.
         "/bin/sh",
     ])
 }
