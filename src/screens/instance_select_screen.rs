@@ -39,7 +39,7 @@ impl InstanceSelectScreen {
     pub fn new() -> InstanceSelectScreen {
         let instance_table_component = InstanceTable::new();
         let search_component = TextInput::default();
-        let mut header_tabs_component = HeaderTabs::new();
+        let mut header_tabs_component = HeaderTabs::new(Tab::ec2_flow());
         header_tabs_component.set_selected(Tab::Instances);
         Self {
             header_tabs_component,

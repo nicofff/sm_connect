@@ -38,7 +38,7 @@ pub enum RegionSelectScreenOutcome {
 impl RegionSelectScreen {
     pub fn new(config: Arc<Mutex<Config>>) -> Self {
         let region_select_component = RegionList::new(config.clone());
-        let mut header_tabs_component = HeaderTabs::new();
+        let mut header_tabs_component = HeaderTabs::new(Tab::ec2_flow());
         header_tabs_component.set_selected(Tab::Region);
         Self {
             header_tabs_component,
