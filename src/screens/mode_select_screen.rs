@@ -32,6 +32,8 @@ pub enum ModeSelectScreenOutcome {
 
 impl ModeSelectScreen {
     pub fn new() -> Self {
+        // The mode picker sits before the flow branches, so no flow step is
+        // highlighted yet — intentionally no `set_selected` call here.
         let header_tabs_component = HeaderTabs::new(Tab::ec2_flow());
         let list = SimpleList::new(vec![MODE_EC2.to_string(), MODE_ECS.to_string()]);
         Self {
