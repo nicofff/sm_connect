@@ -77,6 +77,7 @@ async fn main() -> Result<()> {
         Ok(Some(UserAction::Connect(instance))) => connect(instance)?,
         Ok(Some(UserAction::Tunnel(instance))) => tunnel(instance)?,
         Ok(Some(UserAction::FileManager(instance))) => launch_file_manager(instance)?,
+        Ok(Some(UserAction::EcsExec { task, container })) => ecs_exec(task, container)?,
         Ok(None) => {}
     }
     Ok(())
@@ -121,6 +122,24 @@ fn tunnel(instance: InstanceInfo) -> Result<()> {
 fn launch_file_manager(instance: InstanceInfo) -> Result<()> {
     let mut app = FileManagerApp::new()?;
     app.run(instance)
+}
+
+fn ecs_exec(task: aws::EcsTaskInfo, container: String) -> Result<()> {
+    run_aws_command(&[
+        "--region",
+        task.get_region().as_ref(),
+        "ecs",
+        "execute-command",
+        "--cluster",
+        task.get_cluster(),
+        "--task",
+        task.get_task_arn(),
+        "--container",
+        &container,
+        "--interactive",
+        "--command",
+        "/bin/sh",
+    ])
 }
 
 fn connect(instance: InstanceInfo) -> Result<()> {
