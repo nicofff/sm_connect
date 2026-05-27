@@ -6,6 +6,7 @@ use aws_sdk_ec2::{
     Client,
     types::{Filter, Instance},
 };
+use aws_sdk_ecs::types::DesiredStatus;
 
 use crate::history::History;
 
@@ -205,6 +206,76 @@ pub async fn fetch_instances(region: Region) -> Result<Vec<InstanceInfo>> {
         })
         .collect();
     Ok(instances)
+}
+
+/// Enumerates all RUNNING ECS tasks across every cluster in the region.
+///
+/// Steps: list clusters -> for each cluster list RUNNING task ARNs (paginated) ->
+/// describe those tasks in batches of <=100 to pull group/definition/status/containers.
+pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
+    let config = aws_config::defaults(BehaviorVersion::latest())
+        .region(region.clone())
+        .load()
+        .await;
+    let client = aws_sdk_ecs::Client::new(&config);
+
+    let clusters = client.list_clusters().send().await?;
+    let cluster_arns = clusters.cluster_arns.unwrap_or_default();
+
+    let mut tasks: Vec<EcsTaskInfo> = Vec::new();
+
+    for cluster_arn in cluster_arns {
+        // Collect RUNNING task ARNs for this cluster, following pagination.
+        let mut task_arns: Vec<String> = Vec::new();
+        let mut next_token: Option<String> = None;
+        loop {
+            let resp = client
+                .list_tasks()
+                .cluster(&cluster_arn)
+                .desired_status(DesiredStatus::Running)
+                .set_next_token(next_token)
+                .send()
+                .await?;
+            task_arns.extend(resp.task_arns.unwrap_or_default());
+            next_token = resp.next_token;
+            if next_token.is_none() {
+                break;
+            }
+        }
+
+        // describe_tasks accepts at most 100 task ARNs per call.
+        for chunk in task_arns.chunks(100) {
+            let described = client
+                .describe_tasks()
+                .cluster(&cluster_arn)
+                .set_tasks(Some(chunk.to_vec()))
+                .send()
+                .await?;
+            for task in described.tasks.unwrap_or_default() {
+                let task_arn = task.task_arn.clone().unwrap_or_default();
+                let task_definition_arn = task.task_definition_arn.clone().unwrap_or_default();
+                let group = task.group.clone().unwrap_or_default();
+                let last_status = task.last_status.clone().unwrap_or_default();
+                let containers = task
+                    .containers
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|c| c.name)
+                    .collect();
+                tasks.push(EcsTaskInfo::new(
+                    region.clone(),
+                    cluster_arn.clone(),
+                    task_arn,
+                    task_definition_arn,
+                    group,
+                    last_status,
+                    containers,
+                ));
+            }
+        }
+    }
+
+    Ok(tasks)
 }
 
 #[cfg(test)]
