@@ -9,11 +9,11 @@ use ratatui::{
 };
 
 use crate::{
-    aws::InstanceInfo,
+    aws::EcsTaskInfo,
     components::{
         Component,
         header_tabs::{HeaderTabs, Tab},
-        instance_table::{InstanceTable, InstanceTableOutputAction},
+        task_table::{TaskTable, TaskTableOutputAction},
         text_input::{TextInput, TextInputOutputAction},
     },
 };
@@ -21,36 +21,37 @@ use crate::{
 use super::Screen;
 use anyhow::Result;
 
-pub struct InstanceSelectScreen {
+pub struct TaskSelectScreen {
     header_tabs_component: HeaderTabs,
-    instance_table_component: InstanceTable,
+    task_table_component: TaskTable,
     search_component: TextInput,
     search_active: bool,
 }
 
-pub enum InstanceSelectScreenOutcome {
+// Short-lived outcome enum built and matched immediately, so the size spread
+// between the data and unit variants does not matter (mirrors the EC2 outcome enums).
+#[allow(clippy::large_enum_variant)]
+pub enum TaskSelectScreenOutcome {
     Exit,
-    Connect(InstanceInfo),
-    Tunnel(InstanceInfo),
-    FileManager(InstanceInfo),
+    Exec(EcsTaskInfo),
 }
 
-impl InstanceSelectScreen {
-    pub fn new() -> InstanceSelectScreen {
-        let instance_table_component = InstanceTable::new();
+impl TaskSelectScreen {
+    pub fn new() -> TaskSelectScreen {
+        let task_table_component = TaskTable::new();
         let search_component = TextInput::default();
-        let mut header_tabs_component = HeaderTabs::new(Tab::ec2_flow());
-        header_tabs_component.set_selected(Tab::Instances);
+        let mut header_tabs_component = HeaderTabs::new(Tab::ecs_flow());
+        header_tabs_component.set_selected(Tab::Tasks);
         Self {
             header_tabs_component,
-            instance_table_component,
+            task_table_component,
             search_component,
             search_active: false,
         }
     }
 
-    pub fn set_instances(&mut self, instances: Vec<InstanceInfo>) {
-        self.instance_table_component.set_instances(instances);
+    pub fn set_tasks(&mut self, tasks: Vec<EcsTaskInfo>) {
+        self.task_table_component.set_tasks(tasks);
     }
 
     fn draw(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
@@ -61,7 +62,7 @@ impl InstanceSelectScreen {
                 .constraints([Constraint::Max(3), Constraint::Fill(1)].as_ref())
                 .split(frame.area());
             self.header_tabs_component.view(frame, layout[0]);
-            self.instance_table_component.view(frame, layout[1]);
+            self.task_table_component.view(frame, layout[1]);
             if self.search_active {
                 let search_layout = Layout::default()
                     .direction(ratatui::layout::Direction::Vertical)
@@ -77,27 +78,24 @@ impl InstanceSelectScreen {
     }
 }
 
-impl Screen for InstanceSelectScreen {
-    type Outcome = InstanceSelectScreenOutcome;
-    fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<InstanceSelectScreenOutcome> {
+impl Screen for TaskSelectScreen {
+    type Outcome = TaskSelectScreenOutcome;
+    fn run(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+    ) -> Result<TaskSelectScreenOutcome> {
         loop {
             self.draw(terminal)?;
             let event = event::read()?;
             if !self.search_active {
-                let message = self.instance_table_component.handle_event(event);
-                let action = self.instance_table_component.update(message)?;
+                let message = self.task_table_component.handle_event(event);
+                let action = self.task_table_component.update(message)?;
                 match action {
-                    Some(InstanceTableOutputAction::Exit) => return Ok(InstanceSelectScreenOutcome::Exit),
-                    Some(InstanceTableOutputAction::ReturnInstance(instance)) => {
-                        return Ok(InstanceSelectScreenOutcome::Connect(instance));
+                    Some(TaskTableOutputAction::Exit) => return Ok(TaskSelectScreenOutcome::Exit),
+                    Some(TaskTableOutputAction::ReturnTask(task)) => {
+                        return Ok(TaskSelectScreenOutcome::Exec(task));
                     }
-                    Some(InstanceTableOutputAction::ReturnInstanceForTunnel(instance)) => {
-                        return Ok(InstanceSelectScreenOutcome::Tunnel(instance));
-                    }
-                    Some(InstanceTableOutputAction::ReturnInstanceForFileManager(instance)) => {
-                        return Ok(InstanceSelectScreenOutcome::FileManager(instance));
-                    }
-                    Some(InstanceTableOutputAction::Search) => {
+                    Some(TaskTableOutputAction::Search) => {
                         self.search_active = true;
                     }
                     None => {}
@@ -107,21 +105,23 @@ impl Screen for InstanceSelectScreen {
                 let action = self.search_component.update(message)?;
                 match action {
                     Some(TextInputOutputAction::Exit) => {
+                        // Search text is intentionally kept so reopening (`/`) resumes
+                        // the previous query; matches instance_select_screen behavior.
                         self.search_active = false;
                     }
                     Some(TextInputOutputAction::Return(search)) => {
-                        self.instance_table_component.apply_filter(search);
+                        self.task_table_component.apply_filter(search);
                         self.search_active = false;
                     }
                     Some(TextInputOutputAction::PartialReturn(search)) => {
-                        self.instance_table_component.apply_filter(search);
+                        self.task_table_component.apply_filter(search);
                     }
                     Some(TextInputOutputAction::ReturnWithKeyUp) => {
-                        self.instance_table_component.previous();
+                        self.task_table_component.previous();
                         self.search_active = false;
                     }
                     Some(TextInputOutputAction::ReturnWithKeyDown) => {
-                        self.instance_table_component.next();
+                        self.task_table_component.next();
                         self.search_active = false;
                     }
                     None => {}

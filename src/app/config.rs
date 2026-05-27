@@ -18,10 +18,19 @@ struct RegionConfig {
 // when it becomes stable as const , switch to Duration::from_days(7).as_secs();
 // https://github.com/rust-lang/rust/issues/120301
 const DEFAULT_RECENT_TIMEOUT: u64 = 60 * 60 * 24 * 7;
+
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     recent_timeout: u64,
     regions: HashMap<String, RegionConfig>,
+    #[serde(default = "default_true")]
+    ec2_enabled: bool,
+    #[serde(default = "default_true")]
+    ecs_enabled: bool,
 }
 
 impl Default for Config {
@@ -33,6 +42,8 @@ impl Default for Config {
         Config {
             regions,
             recent_timeout: DEFAULT_RECENT_TIMEOUT,
+            ec2_enabled: true,
+            ecs_enabled: true,
         }
     }
 }
@@ -82,7 +93,7 @@ impl Config {
 
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
-        let config = match from_str(&contents) {
+        let mut config: Config = match from_str(&contents) {
             Ok(config) => config,
             Err(_) => {
                 let config = Config::default();
@@ -90,10 +101,26 @@ impl Config {
                 config
             }
         };
+        // Repair a hand-edited file that disabled both modes.
+        if config.heal_disabled_modes() {
+            config.persist()?;
+        }
         Ok(Arc::new(Mutex::new(config)))
     }
 
+    /// The single invariant gate, enforced on every write: at least one of the
+    /// EC2 / ECS modes must remain enabled. Checked before any filesystem IO.
+    fn ensure_valid(&self) -> Result<()> {
+        if !self.ec2_enabled && !self.ecs_enabled {
+            return Err(anyhow::anyhow!(
+                "at least one mode (EC2 or ECS) must remain enabled"
+            ));
+        }
+        Ok(())
+    }
+
     pub fn persist(&self) -> Result<()> {
+        self.ensure_valid()?;
         let config_path = Config::get_config_path()?;
         let mut file = std::fs::OpenOptions::new()
             .create(true)
@@ -166,8 +193,83 @@ impl Config {
         self.recent_timeout
     }
     #[allow(dead_code)]
-    pub fn set_recent_timeout(&mut self, timeout: u64) -> Result<()> {
+    pub fn set_recent_timeout(&mut self, timeout: u64) {
+        // In-memory only; the config menu persists once on exit.
         self.recent_timeout = timeout;
-        self.persist()
+    }
+
+    pub fn is_ec2_enabled(&self) -> bool {
+        self.ec2_enabled
+    }
+
+    pub fn is_ecs_enabled(&self) -> bool {
+        self.ecs_enabled
+    }
+
+    /// Flips the EC2 flag in memory. Both modes may be off transiently while the
+    /// user reorganizes; the "at least one enabled" invariant is enforced on
+    /// persist (the config menu persists on exit).
+    pub fn toggle_ec2(&mut self) {
+        self.ec2_enabled = !self.ec2_enabled;
+    }
+
+    /// Flips the ECS flag in memory. See `toggle_ec2` for why this can't fail.
+    pub fn toggle_ecs(&mut self) {
+        self.ecs_enabled = !self.ecs_enabled;
+    }
+
+    /// Repairs a hand-edited config that disabled both modes by re-enabling both.
+    /// Returns true if a change was made (so the caller can persist the fix).
+    fn heal_disabled_modes(&mut self) -> bool {
+        if !self.ec2_enabled && !self.ecs_enabled {
+            self.ec2_enabled = true;
+            self.ecs_enabled = true;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ensure_valid_rejects_both_disabled() {
+        let mut c = Config::default();
+        assert!(c.ensure_valid().is_ok()); // both enabled by default
+        c.ec2_enabled = false;
+        c.ecs_enabled = false;
+        assert!(c.ensure_valid().is_err());
+    }
+
+    #[test]
+    fn toggles_can_leave_both_modes_off_in_memory() {
+        let mut c = Config::default();
+        c.toggle_ec2(); // ec2 off, ecs still on
+        c.toggle_ecs(); // both off — allowed transiently
+        assert!(!c.is_ec2_enabled());
+        assert!(!c.is_ecs_enabled());
+        // The invariant is enforced only on persist, not on the toggle.
+        assert!(c.ensure_valid().is_err());
+    }
+
+    #[test]
+    fn heal_reenables_both_when_both_disabled() {
+        let mut c = Config::default();
+        c.ec2_enabled = false;
+        c.ecs_enabled = false;
+        assert!(c.heal_disabled_modes());
+        assert!(c.is_ec2_enabled() && c.is_ecs_enabled());
+    }
+
+    #[test]
+    fn heal_is_noop_when_a_mode_is_enabled() {
+        let mut c = Config::default();
+        c.ecs_enabled = false; // ec2 still enabled
+        assert!(!c.heal_disabled_modes());
+        assert!(c.is_ec2_enabled());
+        assert!(!c.is_ecs_enabled());
     }
 }

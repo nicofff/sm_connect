@@ -1,10 +1,15 @@
 use crate::aws::InstanceInfo;
+use crate::aws::EcsTaskInfo;
 
 use crate::screens::Screen;
 use crate::screens::config_screen::ConfigScreen;
+use crate::screens::container_select_screen::{ContainerSelectScreen, ContainerSelectScreenOutcome};
 use crate::screens::instance_select_screen::InstanceSelectScreen;
 use crate::screens::loading_instances_screen::LoadingInstancesScreen;
+use crate::screens::loading_tasks_screen::{LoadingTasksScreen, LoadingTasksScreenOutcome};
+use crate::screens::mode_select_screen::{ModeSelectScreen, ModeSelectScreenOutcome};
 use crate::screens::region_select_screen::RegionSelectScreen;
+use crate::screens::task_select_screen::{TaskSelectScreen, TaskSelectScreenOutcome};
 use crate::screens::{loading_instances_screen, region_select_screen};
 use crate::ui::restore_terminal;
 use crate::ui::setup_terminal;
@@ -13,6 +18,7 @@ use anyhow::Context;
 use ratatui::prelude::*;
 
 use std::io::Stdout;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 
@@ -23,13 +29,18 @@ pub enum UserAction {
     Connect(InstanceInfo),
     Tunnel(InstanceInfo),
     FileManager(InstanceInfo),
+    EcsExec { task: EcsTaskInfo, container: String },
 }
 
 #[derive(Debug, Clone)]
 pub enum SelectedScreen {
     RegionSelect,
+    ModeSelect(String),
     LoadingInstances(String),
     InstanceSelect,
+    LoadingTasks(String),
+    TaskSelect,
+    ContainerSelect,
     Config,
 }
 
@@ -38,7 +49,10 @@ pub struct App {
     selected_screen: SelectedScreen,
     region_select_screen: RegionSelectScreen,
     instance_selection_screen: InstanceSelectScreen,
+    task_select_screen: TaskSelectScreen,
+    selected_task: Option<EcsTaskInfo>,
     config_screen: ConfigScreen,
+    config: Arc<Mutex<config::Config>>,
 }
 
 impl App {
@@ -47,13 +61,17 @@ impl App {
         let config = config::Config::new()?;
         let region_select_screen = RegionSelectScreen::new(config.clone());
         let instance_selection_screen = InstanceSelectScreen::new();
+        let task_select_screen = TaskSelectScreen::new();
         let config_screen = ConfigScreen::new(config.clone());
         Ok(App {
             terminal,
             selected_screen: SelectedScreen::RegionSelect,
             region_select_screen,
             instance_selection_screen,
+            task_select_screen,
+            selected_task: None,
             config_screen,
+            config,
         })
     }
 
@@ -66,7 +84,16 @@ impl App {
                     match self.region_select_screen.run(&mut self.terminal)? {
                         region_select_screen::RegionSelectScreenOutcome::Exit => should_exit = true,
                         region_select_screen::RegionSelectScreenOutcome::RegionSelected(region) => {
-                            self.selected_screen = SelectedScreen::LoadingInstances(region);
+                            let (ec2, ecs) = {
+                                let cfg = self.config.lock().unwrap();
+                                (cfg.is_ec2_enabled(), cfg.is_ecs_enabled())
+                            };
+                            self.selected_screen = match (ec2, ecs) {
+                                (true, false) => SelectedScreen::LoadingInstances(region),
+                                (false, true) => SelectedScreen::LoadingTasks(region),
+                                // both enabled (and the impossible both-disabled) -> show the picker
+                                _ => SelectedScreen::ModeSelect(region),
+                            };
                         }
                         region_select_screen::RegionSelectScreenOutcome::OpenConfig => {
                             self.selected_screen = SelectedScreen::Config;
@@ -106,6 +133,65 @@ impl App {
                         ) => {
                             should_exit = true;
                             return_value = Some(UserAction::FileManager(instance_info));
+                        }
+                    }
+                }
+                SelectedScreen::ModeSelect(region) => {
+                    match ModeSelectScreen::new().run(&mut self.terminal)? {
+                        ModeSelectScreenOutcome::Exit => {
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                        }
+                        ModeSelectScreenOutcome::Ec2 => {
+                            self.selected_screen = SelectedScreen::LoadingInstances(region);
+                        }
+                        ModeSelectScreenOutcome::Ecs => {
+                            self.selected_screen = SelectedScreen::LoadingTasks(region);
+                        }
+                    }
+                }
+                SelectedScreen::LoadingTasks(region) => {
+                    match LoadingTasksScreen::new(region).run(&mut self.terminal)? {
+                        LoadingTasksScreenOutcome::Cancelled => {
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                        }
+                        LoadingTasksScreenOutcome::TasksFetched(tasks) => {
+                            self.task_select_screen.set_tasks(tasks);
+                            self.selected_screen = SelectedScreen::TaskSelect;
+                        }
+                    }
+                }
+                SelectedScreen::TaskSelect => {
+                    match self.task_select_screen.run(&mut self.terminal)? {
+                        TaskSelectScreenOutcome::Exit => {
+                            // Exiting the list starts over at region select, matching the
+                            // EC2 path (InstanceSelect Exit also returns to RegionSelect).
+                            self.selected_screen = SelectedScreen::RegionSelect;
+                        }
+                        TaskSelectScreenOutcome::Exec(task) => {
+                            if task.get_containers().len() == 1 {
+                                let container = task.get_containers()[0].clone();
+                                should_exit = true;
+                                return_value = Some(UserAction::EcsExec { task, container });
+                            } else {
+                                self.selected_task = Some(task);
+                                self.selected_screen = SelectedScreen::ContainerSelect;
+                            }
+                        }
+                    }
+                }
+                SelectedScreen::ContainerSelect => {
+                    let task = self
+                        .selected_task
+                        .clone()
+                        .expect("ContainerSelect requires a selected task");
+                    let containers = task.get_containers().to_vec();
+                    match ContainerSelectScreen::new(containers).run(&mut self.terminal)? {
+                        ContainerSelectScreenOutcome::Exit => {
+                            self.selected_screen = SelectedScreen::TaskSelect;
+                        }
+                        ContainerSelectScreenOutcome::Return(container) => {
+                            should_exit = true;
+                            return_value = Some(UserAction::EcsExec { task, container });
                         }
                     }
                 }

@@ -1,3 +1,4 @@
+use crate::app::config::Config;
 use crate::components::Component;
 use anyhow::Result;
 use crossterm::event::{Event, KeyCode};
@@ -7,36 +8,51 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, List, ListItem, ListState, Row, Table},
 };
+use std::sync::{Arc, Mutex};
 
 use super::get_help_styled;
 #[derive(Debug, Clone, Copy)]
 pub enum ConfigOption {
     ResetRecent,
     SetRecentTimeout,
+    ToggleEc2,
+    ToggleEcs,
 }
 
-impl From<ConfigOption> for String {
-    fn from(option: ConfigOption) -> String {
-        match option {
-            ConfigOption::ResetRecent => "Reset Recent Instances".to_string(),
-            ConfigOption::SetRecentTimeout => "Set Recent Timeout".to_string(),
-        }
-    }
-}
-
-const CONFIG_OPTIONS: [ConfigOption; 2] =
-    [ConfigOption::ResetRecent, ConfigOption::SetRecentTimeout];
+const CONFIG_OPTIONS: [ConfigOption; 4] = [
+    ConfigOption::ResetRecent,
+    ConfigOption::SetRecentTimeout,
+    ConfigOption::ToggleEc2,
+    ConfigOption::ToggleEcs,
+];
 
 #[derive(Debug)]
 pub struct ConfigList {
     state: ListState,
+    config: Arc<Mutex<Config>>,
 }
 
 impl ConfigList {
-    pub fn new() -> ConfigList {
+    pub fn new(config: Arc<Mutex<Config>>) -> ConfigList {
         let mut state = ListState::default();
         state.select(Some(0));
-        ConfigList { state }
+        ConfigList { state, config }
+    }
+
+    /// Display label for an option. The mode toggles show their current state.
+    fn label(&self, option: ConfigOption) -> String {
+        match option {
+            ConfigOption::ResetRecent => "Reset Recent Instances".to_string(),
+            ConfigOption::SetRecentTimeout => "Set Recent Timeout".to_string(),
+            ConfigOption::ToggleEc2 => {
+                let enabled = self.config.lock().unwrap().is_ec2_enabled();
+                format!("EC2 mode: {}", if enabled { "enabled" } else { "disabled" })
+            }
+            ConfigOption::ToggleEcs => {
+                let enabled = self.config.lock().unwrap().is_ecs_enabled();
+                format!("ECS mode: {}", if enabled { "enabled" } else { "disabled" })
+            }
+        }
     }
 
     fn next(&mut self) {
@@ -75,7 +91,7 @@ impl ConfigList {
         let items: Vec<ListItem> = CONFIG_OPTIONS
             .iter()
             .map(|i| {
-                let name: String = (*i).into();
+                let name = self.label(*i);
                 ListItem::new(name)
             })
             .collect();

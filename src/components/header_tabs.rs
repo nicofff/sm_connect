@@ -9,13 +9,17 @@ use ratatui::{
 use super::Component;
 
 pub struct HeaderTabs {
+    tabs: Vec<Tab>,
     selected: Option<Tab>,
 }
-#[derive(Debug, Clone, Copy)]
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
     Region,
     Instances,
     Connection,
+    Tasks,
+    Container,
 }
 
 impl Tab {
@@ -24,15 +28,19 @@ impl Tab {
             Tab::Region => "Region",
             Tab::Instances => "Instances",
             Tab::Connection => "Connection",
+            Tab::Tasks => "Tasks",
+            Tab::Container => "Container",
         }
     }
 
-    pub fn get_index(&self) -> usize {
-        match self {
-            Tab::Region => 0,
-            Tab::Instances => 1,
-            Tab::Connection => 2,
-        }
+    /// The EC2 / Session Manager flow steps.
+    pub fn ec2_flow() -> Vec<Tab> {
+        vec![Tab::Region, Tab::Instances, Tab::Connection]
+    }
+
+    /// The ECS Exec flow steps.
+    pub fn ecs_flow() -> Vec<Tab> {
+        vec![Tab::Region, Tab::Tasks, Tab::Container]
     }
 }
 
@@ -43,16 +51,15 @@ impl From<Tab> for Line<'static> {
 }
 
 impl HeaderTabs {
-    pub fn new() -> Self {
-        Self { selected: None }
+    pub fn new(tabs: Vec<Tab>) -> Self {
+        Self {
+            tabs,
+            selected: None,
+        }
     }
 
     pub fn set_selected(&mut self, tab: Tab) {
         self.selected = Some(tab);
-    }
-
-    pub fn get_all_tabs(&self) -> Vec<Tab> {
-        vec![Tab::Region, Tab::Instances, Tab::Connection]
     }
 }
 
@@ -70,11 +77,14 @@ impl Component for HeaderTabs {
     }
 
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let tabs = Tabs::new(self.get_all_tabs())
+        let selected_index = self
+            .selected
+            .and_then(|sel| self.tabs.iter().position(|t| *t == sel));
+        let tabs = Tabs::new(self.tabs.clone())
             .block(Block::bordered())
             .style(Style::default().white())
             .highlight_style(Style::default().yellow())
-            .select(self.selected.map(|tab| tab.get_index()));
+            .select(selected_index);
         frame.render_widget(tabs, area);
     }
 
