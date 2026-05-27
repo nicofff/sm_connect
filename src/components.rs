@@ -5,6 +5,7 @@ pub mod instance_table;
 pub mod loader;
 pub mod region_list;
 pub mod simple_list;
+pub mod task_table;
 pub mod text_input;
 use anyhow::Result;
 use crossterm::event::Event;
