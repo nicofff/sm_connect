@@ -101,7 +101,7 @@ impl App {
                     }
                 }
                 SelectedScreen::LoadingInstances(region) => {
-                    match LoadingInstancesScreen::new(region.clone()).run(&mut self.terminal)? {
+                    match LoadingInstancesScreen::new(region).run(&mut self.terminal)? {
                         loading_instances_screen::LoadingInstancesScreenOutcome::Cancelled => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
@@ -150,7 +150,7 @@ impl App {
                     }
                 }
                 SelectedScreen::LoadingTasks(region) => {
-                    match LoadingTasksScreen::new(region.clone()).run(&mut self.terminal)? {
+                    match LoadingTasksScreen::new(region).run(&mut self.terminal)? {
                         LoadingTasksScreenOutcome::Cancelled => {
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
