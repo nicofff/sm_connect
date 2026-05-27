@@ -102,10 +102,10 @@ fn service_from_group(group: &str) -> String {
 #[derive(Debug, Clone)]
 pub struct EcsTaskInfo {
     region: Region,
-    cluster: String,       // raw cluster ARN, passed to `--cluster`
-    cluster_name: String,  // short name, for display + search
-    task_arn: String,      // raw task ARN, passed to `--task`
-    task_id: String,       // short id, for display + search
+    cluster: String,      // raw cluster ARN, passed to `--cluster`
+    cluster_name: String, // short name, for display + search
+    task_arn: String,     // raw task ARN, passed to `--task`
+    task_id: String,      // short id, for display + search
     task_definition: String,
     service: String,
     last_status: String,
@@ -220,30 +220,31 @@ pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
     let client = aws_sdk_ecs::Client::new(&config);
 
     // Enumerate clusters across all pages via the SDK paginator.
-    let mut cluster_arns: Vec<String> = Vec::new();
-    let mut cluster_pages = client.list_clusters().into_paginator().items().send();
-    while let Some(cluster_arn) = cluster_pages.next().await {
-        cluster_arns.push(cluster_arn?);
-    }
+    let cluster_arns: Result<Vec<String>, _> = client
+        .list_clusters()
+        .into_paginator()
+        .items()
+        .send()
+        .collect()
+        .await;
+
+    let cluster_arns = cluster_arns?;
 
     let mut tasks: Vec<EcsTaskInfo> = Vec::new();
 
     for cluster_arn in cluster_arns {
-        // Collect RUNNING task ARNs for this cluster across all pages.
-        let mut task_arns: Vec<String> = Vec::new();
-        let mut task_pages = client
+        let task_arns: Result<Vec<String>, _> = client
             .list_tasks()
             .cluster(&cluster_arn)
             .desired_status(DesiredStatus::Running)
             .into_paginator()
             .items()
-            .send();
-        while let Some(task_arn) = task_pages.next().await {
-            task_arns.push(task_arn?);
-        }
+            .send()
+            .collect()
+            .await;
 
         // describe_tasks accepts at most 100 task ARNs per call.
-        for chunk in task_arns.chunks(100) {
+        for chunk in task_arns?.chunks(100) {
             let described = client
                 .describe_tasks()
                 .cluster(&cluster_arn)
@@ -326,9 +327,15 @@ mod tests {
         assert_eq!(task.get_task_definition(), "web:7");
         assert_eq!(task.get_service(), "web-api");
         assert_eq!(task.get_last_status(), "RUNNING");
-        assert_eq!(task.get_containers(), &["app".to_string(), "sidecar".to_string()]);
+        assert_eq!(
+            task.get_containers(),
+            &["app".to_string(), "sidecar".to_string()]
+        );
         // The raw cluster / task ARNs are preserved for the CLI command.
         assert_eq!(task.get_cluster(), "arn:aws:ecs:us-east-1:123:cluster/prod");
-        assert_eq!(task.get_task_arn(), "arn:aws:ecs:us-east-1:123:task/prod/deadbeef");
+        assert_eq!(
+            task.get_task_arn(),
+            "arn:aws:ecs:us-east-1:123:task/prod/deadbeef"
+        );
     }
 }
