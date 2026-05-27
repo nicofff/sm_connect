@@ -151,6 +151,8 @@ impl App {
                 SelectedScreen::TaskSelect => {
                     match self.task_select_screen.run(&mut self.terminal)? {
                         TaskSelectScreenOutcome::Exit => {
+                            // Exiting the list starts over at region select, matching the
+                            // EC2 path (InstanceSelect Exit also returns to RegionSelect).
                             self.selected_screen = SelectedScreen::RegionSelect;
                         }
                         TaskSelectScreenOutcome::Exec(task) => {

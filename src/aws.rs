@@ -271,12 +271,17 @@ pub async fn fetch_ecs_tasks(region: Region) -> Result<Vec<EcsTaskInfo>> {
                 let task_definition_arn = task.task_definition_arn.clone().unwrap_or_default();
                 let group = task.group.clone().unwrap_or_default();
                 let last_status = task.last_status.clone().unwrap_or_default();
-                let containers = task
+                let containers: Vec<String> = task
                     .containers
                     .unwrap_or_default()
                     .into_iter()
                     .filter_map(|c| c.name)
                     .collect();
+                // A task with no named containers can't be exec'd into; skip it
+                // so it never shows up as an unusable row / empty container picker.
+                if containers.is_empty() {
+                    continue;
+                }
                 tasks.push(EcsTaskInfo::new(
                     region.clone(),
                     cluster_arn.clone(),
